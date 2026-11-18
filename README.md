@@ -1,6 +1,6 @@
 # Neon Coast
 
-An original top-down open-world city sandbox for phones and desktop browsers. Drive, explore, take jobs and outrun the police. Everything (graphics and sound) is generated in code, with no downloads, so it runs fully offline.
+An original third-person 3D open-world city sandbox for phones and desktop browsers. Drive, explore, take jobs and outrun the police. Everything (graphics and sound) is generated in code, with no downloads, so it runs fully offline.
 
 ## Play on your phone
 1. Host this folder (for example, GitHub Pages: repo **Settings → Pages →** pick this branch, root folder).
@@ -12,7 +12,8 @@ You can also open `index.html` directly. Offline caching needs it to be served o
 ## Controls
 | Touch | Keyboard | Action |
 |---|---|---|
-| Left thumb (anywhere) | WASD / arrows | Move · steer |
+| Left thumb | WASD / arrows | Move · steer (up = gas, down = brake) |
+| Drag right side | J / L or mouse drag | Look around |
 | FIRE | Space | Shoot / punch (auto-aim) |
 | CAR | E or F | Enter, carjack, exit |
 | RUN / BRAKE | Shift | Sprint · handbrake drift |
@@ -20,7 +21,7 @@ You can also open `index.html` directly. Offline caching needs it to be served o
 | II | P / Esc | Pause |
 
 ## Features
-- 12×12-block coastal city: downtown towers (pseudo-3D), neighborhoods, parks, beach
+- Third-person 3D (three.js, bundled locally); 12×12-block coastal city: downtown towers, neighborhoods, parks, beach
 - Traffic AI, pedestrians, parked cars, carjacking, crashes, fires and explosions
 - 5-star wanted system: patrols, pursuits, foot cops, busted / wasted, Respray garage
 - Jobs from green `$` markers: courier, bank job, hit, street race, rideshare
