@@ -19,6 +19,8 @@ You can also open `index.html` directly. Offline caching needs it to be served o
 | RUN / BRAKE | Shift | Sprint · handbrake drift |
 | ⇄ | Q | Switch weapon |
 | Tap minimap | Tab | Full map |
+| RECRUIT / DISBAND | G | Recruit Palms gang members near you (up to 4) |
+| RUN → UP / BOOST, ⇄ → DOWN / SLOW | Shift / C | Climb and descend (helicopter, rocket pack) or throttle (plane) |
 | II | P / Esc | Pause |
 
 ## Features
@@ -27,7 +29,10 @@ You can also open `index.html` directly. Offline caching needs it to be served o
 - Realistic-proportion people with faces, hairstyles, varied clothing and jointed walk/run animation
 - Traffic AI, pedestrians, parked cars, carjacking, crashes, fires and explosions
 - 5-star wanted system: patrols, pursuits, foot cops, busted / wasted, Respray garage
-- Bigger world: 14×14-block city plus mountain countryside to the west and north: ridged peaks with rock and snow, pine forests, coastline, a winding mountain highway with guard rails, a radio tower on the summit, off-road driving with slope physics
+- Huge world: 14×14-block city, desert, the town of Pine Hollow, an airfield with runway, hangars, a parked plane and helicopters, and mountain countryside: ridged peaks with rock and snow, pine forests, coastline, a winding mountain highway with guard rails, a radio tower on the summit, off-road driving with slope physics
+- Gangs: your green Palms crew and the rival purple Vipers each hold turf. Recruit up to four Palms; they follow you, fight, ride in your car or helicopter and shoot out of the windows. Vipers attack in their turf.
+- Flying: helicopter, stunt plane, rocket backpack, automatic parachute when you bail out mid-air; land on rooftops
+- Driving: speed-sensitive steering and extra grip for stable high-speed handling
 - Jobs from green `$` markers (now including a mountain race): courier, bank job, hit, street race, rideshare
 - Gun store (SMG, armor), clinic, safehouse save, day/night cycle, synthesized audio, autosave
 
@@ -52,3 +57,8 @@ Type a code on the keyboard at any time, or open **Pause → Cheats** to type or
 | EMPTYSTREETS / RUSHHOUR | No traffic / heavy traffic (toggle) |
 | MIDNIGHT / HIGHNOON / GOLDENHOUR | Set the time of day |
 | SUMMIT / HOMEBASE | Teleport to the mountain top / safehouse |
+| SKYPACK | Rocket backpack (toggle) |
+| CHOPPER | Spawn a helicopter |
+| JETSTREAM | Fly a stunt plane (starts in the air) |
+| CREWUP | Three Palms gang members join you |
+| AIRFIELD / PINEHOLLOW | Teleport to the airfield / Pine Hollow |
