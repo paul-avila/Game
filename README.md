@@ -18,6 +18,7 @@ You can also open `index.html` directly. Offline caching needs it to be served o
 | CAR | E or F | Enter, carjack, exit |
 | RUN / BRAKE | Shift | Sprint · handbrake drift |
 | ⇄ | Q | Switch weapon |
+| Tap minimap | Tab | Full map |
 | II | P / Esc | Pause |
 
 ## Features
@@ -26,5 +27,28 @@ You can also open `index.html` directly. Offline caching needs it to be served o
 - Realistic-proportion people with faces, hairstyles, varied clothing and jointed walk/run animation
 - Traffic AI, pedestrians, parked cars, carjacking, crashes, fires and explosions
 - 5-star wanted system: patrols, pursuits, foot cops, busted / wasted, Respray garage
-- Jobs from green `$` markers: courier, bank job, hit, street race, rideshare
+- Bigger world: 14×14-block city plus mountain countryside to the west and north: ridged peaks with rock and snow, pine forests, coastline, a winding mountain highway with guard rails, a radio tower on the summit, off-road driving with slope physics
+- Jobs from green `$` markers (now including a mountain race): courier, bank job, hit, street race, rideshare
 - Gun store (SMG, armor), clinic, safehouse save, day/night cycle, synthesized audio, autosave
+
+## Cheats
+Type a code on the keyboard at any time, or open **Pause → Cheats** to type or tap one.
+
+| Code | Effect |
+|---|---|
+| FIXME | Full health, armor and car repair |
+| PAYDAY | +$250,000 |
+| LOCKNLOAD | All weapons, 999 ammo |
+| BOTTOMLESS | Infinite ammo (toggle) |
+| IRONSKIN | Invincible (toggle) |
+| CLEANRECORD | Clear wanted level |
+| MOSTWANTED | Five-star wanted level |
+| GHOSTMODE | Police ignore you (toggle) |
+| ROSSO / GRANDTOUR | Spawn a Vento S / Vento GT supercar |
+| SIRENS / YELLOWCAB | Spawn a police cruiser / taxi |
+| NITROUS | Super-fast cars (toggle) |
+| BIGBANG | Blow up all nearby cars |
+| SLOWMO | Slow motion (toggle) |
+| EMPTYSTREETS / RUSHHOUR | No traffic / heavy traffic (toggle) |
+| MIDNIGHT / HIGHNOON / GOLDENHOUR | Set the time of day |
+| SUMMIT / HOMEBASE | Teleport to the mountain top / safehouse |
