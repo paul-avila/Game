@@ -1733,7 +1733,7 @@ function startGame(fresh) {
   try { const el = document.documentElement; if (isTouch && el.requestFullscreen) el.requestFullscreen({ navigationUI: 'hide' }).then(() => { try { screen.orientation.lock('landscape').catch(() => { }); } catch (e) { } }).catch(() => { }); } catch (e) { }
 }
 $('btnPlay').onclick = () => startGame(false);
-$('btnNew').onclick = () => { if (confirm('Start a new game? Your saved cash and weapons will be reset.')) startGame(true); };
+$('btnNew').onclick = () => { const b = $('btnNew'); if (b.dataset.armed) { delete b.dataset.armed; b.textContent = 'New game'; startGame(true); } else { b.dataset.armed = '1'; b.textContent = 'Tap again to wipe save'; setTimeout(() => { delete b.dataset.armed; b.textContent = 'New game'; }, 3000); } };
 $('btnResume').onclick = resumeGame;
 $('btnSound').onclick = () => setSound(!AU.on);
 $('btnQuit').onclick = () => { save(); $('pause').classList.add('hidden'); $('menu').classList.remove('hidden'); G.state = 'menu'; muteLoops(); };
