@@ -21,7 +21,7 @@ You can also open `index.html` directly. Offline caching needs it to be served o
 | II | P / Esc | Pause |
 
 ## Features
-- Third-person 3D (three.js, bundled locally); 12×12-block coastal city: downtown towers, neighborhoods, parks, beach
+- Third-person 3D (three.js, bundled locally) with realistic lighting: real-time sun shadows, reflective car paint/glass/water, sunrise-to-night sky, textured streets, glowing streetlights; Graphics High/Low in the pause menu (auto-drops to Low on slow phones); 12×12-block coastal city: downtown towers, neighborhoods, parks, beach
 - Traffic AI, pedestrians, parked cars, carjacking, crashes, fires and explosions
 - 5-star wanted system: patrols, pursuits, foot cops, busted / wasted, Respray garage
 - Jobs from green `$` markers: courier, bank job, hit, street race, rideshare
