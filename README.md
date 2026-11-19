@@ -17,7 +17,8 @@ The game picks the right layout automatically: touch buttons on phones and table
 |---|---|---|
 | Move / drive | WASD or arrows | Left thumb |
 | Look around | Mouse (click the game to capture it), or J / L | Drag right side |
-| Shoot | Left click, K, or Space on foot | FIRE |
+| Shoot | Left click or K | FIRE |
+| Jump | Space (on foot) | JUMP |
 | Aim over the shoulder | Hold right click | auto-aim |
 | Sprint | Shift | RUN |
 | Handbrake | Space or Shift | BRAKE |

@@ -40,6 +40,7 @@
   .overlay{overflow-y:auto;justify-content:safe center}
   .pauseGrid{display:grid;grid-template-columns:1fr;gap:10px;width:min(300px,90vw)}
   .pauseGrid button{min-width:0}
+  @media (max-height:560px){ #menu h1{font-size:clamp(34px,9vh,64px)} #menu .sub{margin-bottom:2px} #menu .help{font-size:11px;line-height:1.35} #menu .ver{position:static!important} }
   @media (max-height:560px){ .pauseGrid{grid-template-columns:1fr 1fr;width:min(560px,94vw);gap:8px} .pauseGrid button{padding:9px 12px;font-size:16px} .pauseGrid #btnResume{grid-column:1/-1} #pauseTitle{font-size:30px!important} }
   .cheatSec{display:grid;grid-template-columns:repeat(auto-fill,minmax(165px,1fr));gap:6px}
   .cheatHead{grid-column:1/-1;font-size:13px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:#9ecbff;text-align:left;border-bottom:1px solid #ffffff22;padding-bottom:3px}
@@ -120,8 +121,8 @@
   <div class="row"><button id="btnChar" class="alt">Character</button></div>
   <div class="row"><button id="btnNew" class="dim">New game</button></div>
   <div class="help">
-    <b>Laptop:</b> click to capture the mouse · WASD move · mouse look · left click shoot · right click aim · F car · Shift sprint · Space handbrake · Tab map · Esc menu<br>
-    <b>Phone:</b> left thumb = move / steer (up = gas) &nbsp;•&nbsp; drag right side = look around &nbsp;•&nbsp; <b>FIRE</b> shoot/punch &nbsp;•&nbsp; <b>CAR</b> enter/exit vehicles
+    <b>Laptop:</b> click to capture the mouse · WASD move · mouse look · left click shoot · right click aim · F car · Shift sprint · Space jump / handbrake · Tab map · Esc menu<br>
+    <b>Phone:</b> left thumb = move / steer (up = gas) &nbsp;•&nbsp; drag right side = look around &nbsp;•&nbsp; <b>FIRE</b> shoot/punch &nbsp;•&nbsp; <b>JUMP</b> jump &nbsp;•&nbsp; <b>CAR</b> enter/exit vehicles
     &nbsp;•&nbsp; <b>RUN</b> sprint (on foot) / handbrake (driving) &nbsp;•&nbsp; <b>⇄</b> switch weapon<br>
     Follow the gold <b>★</b> for the story, walk into green <b>$</b> markers for side jobs, and visit the <b>Neon Palace</b> casino downtown. Tap the minimap for the full map. Take the highways to Pine Hollow, Sunset Bluffs, Copper Ridge and Northgate. Weapons 1–7 (laptop) or ⇄. Type cheat codes any time, or use Pause → Cheats.
   </div>
@@ -160,7 +161,8 @@
       <tr><th></th><th>Laptop / PC</th><th>Phone</th></tr>
       <tr><td>Move / drive</td><td><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> or arrows</td><td>Left thumb</td></tr>
       <tr><td>Look around</td><td>Mouse (click the game first), or <kbd>J</kbd> <kbd>L</kbd></td><td>Drag right side</td></tr>
-      <tr><td>Shoot</td><td>Left click, <kbd>K</kbd>, or <kbd>Space</kbd> on foot</td><td>FIRE</td></tr>
+      <tr><td>Shoot</td><td>Left click or <kbd>K</kbd></td><td>FIRE</td></tr>
+      <tr><td>Jump</td><td><kbd>Space</kbd> on foot</td><td>JUMP</td></tr>
       <tr><td>Aim (over the shoulder)</td><td>Hold right click</td><td>auto-aim</td></tr>
       <tr><td>Sprint</td><td><kbd>Shift</kbd></td><td>RUN</td></tr>
       <tr><td>Handbrake</td><td><kbd>Space</kbd> or <kbd>Shift</kbd></td><td>BRAKE</td></tr>
@@ -1997,13 +1999,14 @@ function layoutButtons() {
   btn.fire = { x: W - r * 1.45 - pad, y: H - r * 1.45 - pad, r: r * 1.15, label: 'FIRE', col: '#ff4f9a' };
   btn.car = { x: W - r * 4.0 - pad, y: H - r * 1.1 - pad, r: r * .9, label: 'CAR', col: '#4d8bff' };
   btn.run = { x: W - r * 1.3 - pad, y: H - r * 4.0 - pad, r: r * .85, label: 'RUN', col: '#ffb020' };
-  btn.wpn = { x: W - r * 3.6 - pad, y: H - r * 3.5 - pad, r: r * .62, label: '⇄', col: '#9b7bff' };
+  btn.wpn = { x: W - r * 4.15 - pad, y: H - r * 3.75 - pad, r: r * .62, label: '⇄', col: '#9b7bff' };
+  btn.jump = Object.assign(btn.jump || { hidden: true }, { x: W - r * 2.75 - pad, y: H - r * 3.0 - pad, r: r * .7, label: 'JUMP', col: '#2bb3c0' });
   btn.pause = { x: W / 2, y: 26, r: 18, label: 'II', col: '#ffffff' };
   btn.scope = Object.assign(btn.scope || { hidden: true }, { x: W - r * 1.3 - pad, y: H - r * 6.3 - pad, r: r * .7, label: 'SCOPE', col: '#2e9e8a' });
   btn.gang = Object.assign(btn.gang || { hidden: true }, { x: W - r * 6.1 - pad, y: H - r * 1.1 - pad, r: r * .8, label: 'RECRUIT', col: '#2e9e5a' });
   for (const k in btn) { btn[k].down = btn[k].down || false; btn[k].id = btn[k].id ?? null; }
 }
-function btnAt(x, y) { for (const k in btn) { const b = btn[k]; if (b.hidden) continue; if (dist(x, y, b.x, b.y) < b.r * 1.25) return k; } return null; }
+function btnAt(x, y) { let best = null, bs = 1; for (const k in btn) { const b = btn[k]; if (b.hidden) continue; const s = dist(x, y, b.x, b.y) / (b.r * 1.25); if (s < bs) { bs = s; best = k; } } return best; }
 const pressed = {}; // one-shot presses
 cv.addEventListener('pointerdown', e => {
   e.preventDefault(); initAudio();
@@ -2087,14 +2090,14 @@ window.addEventListener('keydown', e => {
   if (G.bigMap) { const g = mapGeom(), step = Math.min(W, H) * .25 / g.k;
     if (k === '+' || k === '=') zoomMapAt(1.5, g.vx, g.vy); else if (k === '-' || k === '_') zoomMapAt(1 / 1.5, g.vx, g.vy);
     else if (k === 'arrowleft') MV.cx -= step; else if (k === 'arrowright') MV.cx += step; else if (k === 'arrowup') MV.cy -= step; else if (k === 'arrowdown') MV.cy += step; else return;
-    clampMapView(); e.preventDefault(); return; } if (!keys[k]) { if (k === 'e' || k === 'f') pressed.car = true; if (k === 'g') pressed.gang = true; if (k === 'q') pressed.wpn = true; if (/^[1-7]$/.test(k) && G.state === 'play') pressed.pick = +k - 1; if (k === 'escape') { if (G.state === 'paused' && !$('pause').classList.contains('hidden')) resumeGame(); else pressed.pause = true; } }
+    clampMapView(); e.preventDefault(); return; } if (!keys[k]) { if (k === 'e' || k === 'f') pressed.car = true; if (k === 'g') pressed.gang = true; if (k === 'q') pressed.wpn = true; if (k === ' ') pressed.jump = true; if (/^[1-7]$/.test(k) && G.state === 'play') pressed.pick = +k - 1; if (k === 'escape') { if (G.state === 'paused' && !$('pause').classList.contains('hidden')) resumeGame(); else pressed.pause = true; } }
   keys[k] = true; if ([' ', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright'].includes(k)) e.preventDefault();
 });
 window.addEventListener('keyup', e => { keys[e.key.toLowerCase()] = false; });
 window.addEventListener('blur', () => { for (const k in keys) keys[k] = false; if (G.state === 'play') pauseGame(); });
 document.addEventListener('visibilitychange', () => { if (document.hidden && G.state === 'play') pauseGame(); });
 const kDown = (...ks) => ks.some(k => keys[k]);
-const fireHeld = () => btn.fire.down || mouse.fire || keys['k'] || (keys[' '] && !player.car && !player.jet);
+const fireHeld = () => btn.fire.down || mouse.fire || keys['k'];
 const runHeld = () => btn.run.down || keys['shift'] || (keys[' '] && (!!player.car || !!player.jet));
 
 // ================================================================ camera
@@ -2729,6 +2732,9 @@ function updatePlayer(dt) {
   }
   if (pressed.pick !== undefined && pressed.pick !== false && !inAir) { const i = pressed.pick; if (ownsW(i)) { player.weapon = i; G.scopeTouch = false; msg(WEAPONS[i].name, 1); } else msg(WEAPONS[i].name + ': buy it at the gun store', 1.4); }
   if (pressed.scope) G.scopeTouch = !G.scopeTouch;
+  const canJump = !player.car && !player.jet && !player.para && !player.swim;
+  if (btn.jump) btn.jump.hidden = inputMode !== 'touch' || !canJump;
+  if (pressed.jump && canJump && player.z - floorAt(player.x, player.y, player.z) < 1.5) { player.vz = 105; player.z += 1.6; player.jumpT = .5; }
   if (btn.scope) btn.scope.hidden = !(inputMode === 'touch' && !player.car && WEAPONS[player.weapon].scope);
   if (player.car) G.scopeTouch = false;
   if (pressed.car) {
@@ -5096,7 +5102,7 @@ function drawHUD() {
     if (!mouse.locked) hudText(mouse.lockFailed ? 'Drag with the mouse to look  ·  Left click to shoot' : 'Click the game to look around with the mouse', W / 2, H - 82, 14, '#ffe066', 'center', 700);
     if (G.keysT > 0) {
       G.keysT -= 1 / 60;
-      const lines = ['WASD  move / drive', 'Mouse  look  ·  Left click  shoot  ·  Right click  aim', 'Shift  sprint  ·  Space  handbrake / fly up  ·  C  fly down', 'F  enter / exit vehicle  ·  Q, wheel or 1-7  weapon  ·  G  recruit', 'Tab  map  ·  Esc  pause, controls & cheats'];
+      const lines = ['WASD  move / drive', 'Mouse  look  ·  Left click  shoot  ·  Right click  aim', 'Shift  sprint  ·  Space  jump / handbrake / fly up  ·  C  fly down', 'F  enter / exit vehicle  ·  Q, wheel or 1-7  weapon  ·  G  recruit', 'Tab  map  ·  Esc  pause, controls & cheats'];
       ctx.globalAlpha = clamp(G.keysT, 0, 1);
       ctx.fillStyle = 'rgba(10,8,30,.72)'; ctx.fillRect(12, H - 18 - lines.length * 19 - 10, 430, lines.length * 19 + 14);
       lines.forEach((l, i) => hudText(l, 22, H - 18 - (lines.length - i) * 19 + 6, 13, i ? '#fff' : '#ffe066', 'left', 700));
@@ -5253,7 +5259,7 @@ window.__NC = { G, player, places, startGame, press: k => { pressed[k] = true; }
 
 // version label + updates: the page always asks GitHub for the newest files when online (see sw.js);
 // if a new version arrives while the game is open, the menu offers a one-tap update
-const GAME_VERSION = 'v10.7';
+const GAME_VERSION = 'v10.8';
 for (const el of document.querySelectorAll('.ver')) el.textContent = GAME_VERSION + ' · bikes, easier driving, zoomable map, new cities, police helicopters';
 $('btnUpdate').onclick = () => { save(); location.reload(); };
 if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {

@@ -264,6 +264,12 @@ const check = (name, cond, info = '') => { results.push([cond ? 'PASS' : 'FAIL',
   const cashEsc = await E(() => __NC.G.cash);
   await p.fill('#cheatInput', 'payday'); await p.focus('#cheatInput'); await p.keyboard.press('Escape'); await wait(400);
   check('Esc in the cheats panel applies the typed code and resumes', await p.evaluate(c0 => __NC.G.state === 'play' && __NC.G.cash >= c0 + 250000 && document.getElementById('cheats').classList.contains('hidden'), cashEsc));
+  // ---- v10.8: jump (Space on foot; it no longer shoots)
+  await E(() => { const P = __NC.player; P.x = 1440; P.y = 1100; P.z = 0; window.__jz = 0; window.__ja = __NC.G.am.pistol; const f = () => { window.__jz = Math.max(window.__jz, __NC.player.z); requestAnimationFrame(f); }; f(); });
+  await wait(300); await p.keyboard.press('Space');
+  const jumped = await until(() => window.__jz > 6, 8000);
+  const landed = await until(() => __NC.player.z < .5, 8000);
+  check('Space jumps on foot and lands, without firing', jumped && landed && await E(() => __NC.G.am.pistol === window.__ja), JSON.stringify(await E(() => ({ peak: +window.__jz.toFixed(1) }))));
   // ---- Save / reload persistence
   await E(() => { __NC.G.saveT = 99; }); await wait(1200);
   const before = await E(() => ({ story: __NC.G.storyIdx, cash: Math.floor(__NC.G.cash) }));
