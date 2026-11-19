@@ -243,6 +243,22 @@ const check = (name, cond, info = '') => { results.push([cond ? 'PASS' : 'FAIL',
   const af = await E(() => ({ aim: __NC.mouse.aim, fire: __NC.mouse.fire, locked: __NC.mouse.locked }));
   await p.mouse.up({ button: 'left' }); await p.mouse.up({ button: 'right' }); await wait(200);
   check('left click fires while right click aims', af.aim && af.fire, JSON.stringify(af));
+  // ---- v10.6: cheats by category, bikes lean into turns
+  check('every cheat has a category', await E(() => __NC.CHEATS.every(c => __NC.CHEAT_CATS.some(k => k[0] === c[2])) && __NC.CHEATS.length >= 47));
+  await p.keyboard.press('Escape'); await wait(400); await p.click('#btnCheats'); await wait(300);
+  const heads = await p.$$eval('.cheatHead', els => els.length);
+  await p.evaluate(() => [...document.querySelectorAll('#cheatTabs .ccChip')].find(b => b.textContent.includes('Teleport')).click()); await wait(200);
+  const tele = await p.$$eval('#cheatList button b', els => els.map(e => e.textContent));
+  await p.fill('#cheatInput', 'bike'); await wait(200);
+  const found = await p.$$eval('#cheatList button b', els => els.map(e => e.textContent));
+  check('cheat list is grouped, with tabs and search', heads >= 10 && tele.length === 9 && tele.includes('NORTHGATE') && found.includes('SUPERBIKE') && found.includes('DIRTTRAIL'), JSON.stringify({ heads, tele: tele.length, found }));
+  await p.fill('#cheatInput', ''); await p.click('#cheatBack'); await wait(200); await p.click('#btnResume'); await wait(300);
+  await E(() => { const P = __NC.player; P.x = 1464; P.y = 1000; const c = __NC.makeCar('sportbike', 1464, 1000, Math.PI / 2, { persist: true }); __NC.enterCar(c); c.vx = 0; c.vy = 300; window.__lb = c; });
+  await p.keyboard.down('w'); await p.keyboard.down('d');
+  const leanOk = await until(() => { const c = window.__lb, m = __NC.carMesh(c); return m && c.steerS > .15 && m.userData.leanV > .03; }, 10000);
+  await p.keyboard.up('d'); await p.keyboard.up('w');
+  check('bikes lean into the turn', leanOk, JSON.stringify(await E(() => { const c = window.__lb, m = __NC.carMesh(c); return { steer: +(c.steerS || 0).toFixed(2), lean: m && +m.userData.leanV.toFixed(2) }; })));
+  await E(() => { const c = __NC.player.car; if (c) { c.vx = c.vy = 0; } }); await p.keyboard.press('f'); await wait(300);
   // ---- Save / reload persistence
   await E(() => { __NC.G.saveT = 99; }); await wait(1200);
   const before = await E(() => ({ story: __NC.G.storyIdx, cash: Math.floor(__NC.G.cash) }));

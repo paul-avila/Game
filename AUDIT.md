@@ -10,7 +10,7 @@ Scope: everything in this repository (`index.html` game, `sw.js` offline cache, 
 | Casino rules | `tests/casino-rules.test.js` (106 assertions) | **All pass** |
 | Baccarat odds | 2,000,000 simulated 8-deck hands vs published odds | Banker 45.83% / Player 44.66% / Tie 9.52% (published 45.86 / 44.62 / 9.52); house edge Banker 1.12%, Player 1.17% (published 1.06 / 1.24, within simulation noise) |
 | Slots payback | Exact calculation from reel weights | 91.75% |
-| Full playthrough | `tests/e2e.js` (headless Chromium, laptop layout) | **85/85 pass** (after v10.5) |
+| Full playthrough | `tests/e2e.js` (headless Chromium, laptop layout) | **88/88 pass** (after v10.6) |
 | Phone layout | Playwright Pixel 7 emulation | touch buttons, joystick, TALK/PLAY context button, dialogue taps |
 | Content and safety | Source search | see "Safety and content" below |
 
@@ -88,6 +88,13 @@ Changes: lower top speeds by model (van 90 → Vento S 180 km/h); acceleration t
 - **Could not fire while aiming with right click** (player report). Root cause: browsers don't send a new pointerdown for a second mouse button while one is held; the change arrives as pointermove with `button >= 0`. The game now reads the button mask on those events (ignoring ordinary moves, `button = -1`). e2e: right-hold + left-press gives aim and fire.
 - **Bikes**: bicycle, scooter, adventure bike, sports bike, with visible riders (2-bone reach to the bars and pegs or pedals), helmets, lean in turns and being thrown off in hard crashes. e2e: each can be ridden, and crashing throws you off.
 - **Found while testing**: fixed vehicles (the Pine Hollow Vento GT and the new bikes) could be placed inside a building; placements now look for a clear spot.
+
+## v10.6
+
+- **Cheat list organised** (player request): 47 codes in 12 categories (health, weapons, police, cars, bikes, air & sea, teleport, time & weather, traffic & fun, money & casino, story & dating, reset), with category tabs, and the code box filters as you type. The list is shown straight away instead of behind "Show code list". e2e: every cheat has a category; tabs and search filter correctly.
+- **Bikes leaned the wrong way** (player report): the roll had the wrong sign, so bikes leaned out of turns. They now lean into them. e2e: steering right gives a lean to the right.
+- **Front wheels steered backwards** (found while fixing the lean): every car's and bike's front wheels turned away from the corner. The sign is fixed.
+- **Pause menu didn't fit on phones** (found while testing on a phone-sized screen): "PAUSED", Resume and Main menu were cut off in landscape. On short screens the buttons now sit in two columns, and every overlay can scroll.
 
 ## Safety and content
 

@@ -62,45 +62,116 @@ The game picks the right layout automatically: touch buttons on phones and table
 - Gun store (SMG, armor), clinic, safehouse save, day/night cycle, synthesized audio, autosave
 
 ## Cheats
-Type a code on the keyboard at any time, or open **Pause → Cheats** to type or tap one.
+Type a code on the keyboard at any time, or open **Pause → Cheats**: codes are grouped by category (tabs at the top), and the box filters the list as you type.
 
 **Undoing cheats:** toggle cheats switch off when you enter the same code again. **Pause → Cheats** lists every cheat that is on: tap one to switch it off, or tap **Turn off all cheats** (or type **NOCHEATS**). The HUD shows "CHEATS ON" under the minimap while any toggle is active. One-off cheats (money, teleports, vehicles, time) have nothing to switch off.
+
+**❤️ Health & protection**
 
 | Code | Effect |
 |---|---|
 | FIXME | Full health, armor and car repair |
-| PAYDAY | +$250,000 |
+| IRONSKIN | Invincible (toggle) |
+
+**🔫 Weapons**
+
+| Code | Effect |
+|---|---|
 | LOCKNLOAD | All weapons (incl. sniper and rocket launcher), full ammo |
 | BOTTOMLESS | Infinite ammo (toggle) |
-| IRONSKIN | Invincible (toggle) |
+
+**🚨 Police & wanted level**
+
+| Code | Effect |
+|---|---|
 | CLEANRECORD | Clear wanted level |
-| MOSTWANTED | Five-star wanted level |
 | GHOSTMODE | Police ignore you (toggle) |
-| ROSSO / GRANDTOUR | Spawn a Vento S / Vento GT supercar |
-| PEDALS / SCOOTY / DIRTTRAIL / SUPERBIKE | Spawn a bicycle / scooter / adventure bike / sports bike |
-| SIRENS / YELLOWCAB | Spawn a police cruiser / taxi |
+| MOSTWANTED | Five-star wanted level |
+
+**🚗 Cars**
+
+| Code | Effect |
+|---|---|
+| ROSSO | Spawn a Vento S supercar |
+| PINKRIDE | Spawn a pink Vento S |
+| GRANDTOUR | Spawn a Vento GT |
+| SIRENS | Spawn a police cruiser |
+| YELLOWCAB | Spawn a taxi |
 | NITROUS | Faster cars (toggle) |
 | BIGBANG | Blow up all nearby cars |
-| SLOWMO | Slow motion (toggle) |
-| EMPTYSTREETS / RUSHHOUR | No traffic / heavy traffic (toggle) |
-| MIDNIGHT / HIGHNOON / GOLDENHOUR | Set the time of day |
-| SUMMIT / HOMEBASE | Teleport to the mountain top / safehouse |
-| SKYPACK | Rocket backpack (toggle; F / PACK OFF also takes it off) |
+
+**🏍️ Bikes**
+
+| Code | Effect |
+|---|---|
+| PEDALS | Spawn a bicycle |
+| SCOOTY | Spawn a scooter |
+| DIRTTRAIL | Spawn an adventure bike |
+| SUPERBIKE | Spawn a sports bike |
+
+**🚁 Air & sea**
+
+| Code | Effect |
+|---|---|
 | CHOPPER | Spawn a helicopter |
-| JETSTREAM | Fly a stunt plane (starts in the air) |
-| CREWUP | Three Palms gang members join you |
-| AIRFIELD / PINEHOLLOW | Teleport to the airfield / Pine Hollow |
-| BLUFFS / COPPER / NORTHGATE | Teleport to Sunset Bluffs / Copper Ridge / Northgate |
-| GOLDRUSH | +$1,000,000 |
-| SPEEDBOAT | Spawn a speedboat on nearby water (or at the pier) |
-| PARADISE / HIGHROLLER | Teleport to the island / the Neon Palace |
-| LUCKYSTREAK | Win your next 3 casino rounds |
-| CHARMER | Everyone you date adores you |
-| STORMY / SUNSHINE | Rainstorm (toggle) / clear skies |
-| NOCHEATS | Turn off every cheat that is on |
-| PINKRIDE | Spawn a pink Vento S |
+| JETSTREAM | Fly a stunt plane |
+| SKYPACK | Rocket backpack (toggle; F takes it off) |
+| SPEEDBOAT | Spawn a speedboat on nearby water |
+
+**📍 Teleport**
+
+| Code | Effect |
+|---|---|
+| HOMEBASE | Teleport to the safehouse |
+| HIGHROLLER | Teleport to the Neon Palace casino |
+| PARADISE | Teleport to the island |
+| SUMMIT | Teleport to the highest mountain |
+| AIRFIELD | Teleport to the airfield |
+| PINEHOLLOW | Teleport to Pine Hollow |
+| BLUFFS | Teleport to Sunset Bluffs |
+| COPPER | Teleport to Copper Ridge |
+| NORTHGATE | Teleport to Northgate |
+
+**🌤️ Time & weather**
+
+| Code | Effect |
+|---|---|
+| HIGHNOON | Set time to noon |
+| GOLDENHOUR | Set time to sunset |
+| MIDNIGHT | Set time to midnight |
 | TIMEWARP | Skip ahead 6 hours |
+| SUNSHINE | Clear skies |
+| STORMY | Rainstorm (toggle) |
+
+**🚦 Traffic & fun**
+
+| Code | Effect |
+|---|---|
+| EMPTYSTREETS | No traffic or people (toggle) |
+| RUSHHOUR | Heavy traffic (toggle) |
+| SLOWMO | Slow motion (toggle) |
+| CREWUP | Three Palms gang members join you |
+
+**💰 Money & casino**
+
+| Code | Effect |
+|---|---|
+| PAYDAY | +$250,000 |
+| GOLDRUSH | +$1,000,000 |
+| LUCKYSTREAK | Win your next 3 casino rounds |
+
+**⭐ Story & dating**
+
+| Code | Effect |
+|---|---|
 | STORYSKIP | Complete the current story mission |
+| CHARMER | Everyone you date adores you |
+
+**⚙️ Reset**
+
+| Code | Effect |
+|---|---|
+| NOCHEATS | Turn off every cheat that is on |
 
 ## Tests
 - `node tests/casino-rules.test.js`: 106 checks of the baccarat tableau, payouts, blackjack settlement and slot payback, including a 2-million-hand simulation compared against published baccarat odds. No dependencies.

@@ -36,7 +36,24 @@
   .row{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
   .panel{background:#1a1240;border:2px solid #ff4f9a;border-radius:18px;padding:18px;display:flex;flex-direction:column;gap:10px;min-width:260px;max-width:min(620px,94vw);max-height:94vh;box-sizing:border-box;overflow-y:auto;touch-action:pan-y;-webkit-overflow-scrolling:touch}
   #cheatInput{font:inherit;font-size:18px;font-weight:700;letter-spacing:2px;text-transform:uppercase;padding:10px 12px;border-radius:12px;border:2px solid #4d5cff;background:#0b0820;color:#fff;min-width:0;flex:1;-webkit-user-select:text;user-select:text;touch-action:manipulation}
-  #cheatList{display:grid;grid-template-columns:repeat(auto-fill,minmax(165px,1fr));gap:6px}
+  #cheatList{display:flex;flex-direction:column;gap:12px}
+  .overlay{overflow-y:auto;justify-content:safe center}
+  .pauseGrid{display:grid;grid-template-columns:1fr;gap:10px;width:min(300px,90vw)}
+  .pauseGrid button{min-width:0}
+  @media (max-height:560px){ .pauseGrid{grid-template-columns:1fr 1fr;width:min(560px,94vw);gap:8px} .pauseGrid button{padding:9px 12px;font-size:16px} .pauseGrid #btnResume{grid-column:1/-1} #pauseTitle{font-size:30px!important} }
+  .cheatSec{display:grid;grid-template-columns:repeat(auto-fill,minmax(165px,1fr));gap:6px}
+  .cheatHead{grid-column:1/-1;font-size:13px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:#9ecbff;text-align:left;border-bottom:1px solid #ffffff22;padding-bottom:3px}
+  #cheatTabs .ccChip{font-size:12px;padding:5px 10px}
+  #cheats .panel > *{flex-shrink:0}
+  @media (max-height:560px){
+    #cheats .panel{padding:10px 12px;gap:6px}
+    #cheats .cheatTitle{font-size:17px!important}
+    #cheats input,#cheatGo{padding:6px 10px;font-size:15px}
+    #cheatMsg{min-height:0!important;font-size:13px}
+    #cheatsOff{padding:6px 12px;font-size:14px}
+    #cheatTabs{flex-wrap:nowrap;overflow-x:auto;padding-bottom:4px;-webkit-overflow-scrolling:touch}
+    #cheatTabs .ccChip{flex:0 0 auto}
+  }
   #cheatList button{min-width:0;font-size:12px;font-weight:600;padding:7px 9px;text-align:left;background:#2a1f66;box-shadow:none;border-radius:10px}
   #cheatList b{display:block;color:#ffe066;letter-spacing:1px}
   #cheatList button.on{background:linear-gradient(180deg,#2e9e5a,#1d6e3c)}
@@ -112,15 +129,17 @@
 </div>
 
 <div id="pause" class="overlay hidden">
-  <h1 style="font-size:48px">PAUSED</h1>
-  <div class="row"><button id="btnResume">Resume</button></div>
-  <div class="row"><button id="btnSound" class="alt">Sound: ON</button></div>
-  <div class="row"><button id="btnGfx" class="alt">Graphics: HIGH</button></div>
-  <div class="row"><button id="btnCheats" class="alt">Cheats</button></div>
-  <div class="row"><button id="btnControls" class="alt">Controls</button></div>
-  <div class="row"><button id="btnChar2" class="alt">Character</button></div>
-  <div class="row"><button id="btnFull" class="alt">Fullscreen</button></div>
-  <div class="row"><button id="btnQuit" class="dim">Main menu</button></div>
+  <h1 id="pauseTitle" style="font-size:48px">PAUSED</h1>
+  <div class="pauseGrid">
+    <button id="btnResume">Resume</button>
+    <button id="btnCheats" class="alt">Cheats</button>
+    <button id="btnChar2" class="alt">Character</button>
+    <button id="btnControls" class="alt">Controls</button>
+    <button id="btnSound" class="alt">Sound: ON</button>
+    <button id="btnGfx" class="alt">Graphics: HIGH</button>
+    <button id="btnFull" class="alt">Fullscreen</button>
+    <button id="btnQuit" class="dim">Main menu</button>
+  </div>
   <div class="ver" style="font-size:12px;opacity:.6;margin-top:4px"></div>
 </div>
 
@@ -167,13 +186,13 @@
 
 <div id="cheats" class="overlay hidden" style="background:#000d">
   <div class="panel">
-    <div style="font-size:24px;font-weight:800">CHEATS</div>
-    <div class="row" style="flex-wrap:nowrap"><input id="cheatInput" placeholder="Type a code" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false"><button id="cheatGo" style="min-width:0">OK</button></div>
+    <div class="cheatTitle" style="font-size:24px;font-weight:800">CHEATS</div>
+    <div class="row" style="flex-wrap:nowrap"><input id="cheatInput" placeholder="Type a code or search" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false"><button id="cheatGo" style="min-width:0">OK</button></div>
     <div id="cheatMsg" style="min-height:20px;color:#ffe066;font-weight:700"></div>
     <div id="cheatActive" class="ccOpts" style="font-size:13px"></div>
     <button id="cheatsOff" class="dim">Turn off all cheats</button>
-    <button id="cheatShow" class="dim">Show code list</button>
-    <div id="cheatList" class="hidden"></div>
+    <div id="cheatTabs" class="ccOpts"></div>
+    <div id="cheatList"></div>
     <button id="cheatBack" class="alt">Back</button>
   </div>
 </div>
@@ -992,54 +1011,68 @@ function updatePathCar(c, dt) {
 }
 
 // ================================================================ cheats
-const CHEATS = [
-  ['FIXME', 'Full health, armor and car repair'],
-  ['PAYDAY', '+$250,000'],
-  ['LOCKNLOAD', 'All weapons (incl. sniper and rocket launcher), full ammo'],
-  ['BOTTOMLESS', 'Infinite ammo (toggle)'],
-  ['IRONSKIN', 'Invincible (toggle)'],
-  ['CLEANRECORD', 'Clear wanted level'],
-  ['MOSTWANTED', 'Five-star wanted level'],
-  ['GHOSTMODE', 'Police ignore you (toggle)'],
-  ['ROSSO', 'Spawn a Vento S supercar'],
-  ['GRANDTOUR', 'Spawn a Vento GT'],
-  ['SIRENS', 'Spawn a police cruiser'],
-  ['YELLOWCAB', 'Spawn a taxi'],
-  ['PEDALS', 'Spawn a bicycle'],
-  ['SCOOTY', 'Spawn a scooter'],
-  ['SUPERBIKE', 'Spawn a sports bike'],
-  ['DIRTTRAIL', 'Spawn an adventure bike'],
-  ['NITROUS', 'Faster cars (toggle)'],
-  ['BIGBANG', 'Blow up all nearby cars'],
-  ['SLOWMO', 'Slow motion (toggle)'],
-  ['EMPTYSTREETS', 'No traffic or people (toggle)'],
-  ['RUSHHOUR', 'Heavy traffic (toggle)'],
-  ['MIDNIGHT', 'Set time to midnight'],
-  ['HIGHNOON', 'Set time to noon'],
-  ['GOLDENHOUR', 'Set time to sunset'],
-  ['SUMMIT', 'Teleport to the highest mountain'],
-  ['HOMEBASE', 'Teleport to the safehouse'],
-  ['SKYPACK', 'Rocket backpack (toggle; F takes it off)'],
-  ['CHOPPER', 'Spawn a helicopter'],
-  ['JETSTREAM', 'Fly a stunt plane'],
-  ['CREWUP', 'Three Palms gang members join you'],
-  ['AIRFIELD', 'Teleport to the airfield'],
-  ['PINEHOLLOW', 'Teleport to Pine Hollow'],
-  ['BLUFFS', 'Teleport to Sunset Bluffs'],
-  ['COPPER', 'Teleport to Copper Ridge'],
-  ['NORTHGATE', 'Teleport to Northgate'],
-  ['GOLDRUSH', '+$1,000,000'],
-  ['SPEEDBOAT', 'Spawn a speedboat on nearby water'],
-  ['PARADISE', 'Teleport to the island'],
-  ['HIGHROLLER', 'Teleport to the Neon Palace casino'],
-  ['LUCKYSTREAK', 'Win your next 3 casino rounds'],
-  ['CHARMER', 'Everyone you date adores you'],
-  ['STORMY', 'Rainstorm (toggle)'],
-  ['NOCHEATS', 'Turn off every cheat that is on'],
-  ['SUNSHINE', 'Clear skies'],
-  ['PINKRIDE', 'Spawn a pink Vento S'],
-  ['TIMEWARP', 'Skip ahead 6 hours'],
-  ['STORYSKIP', 'Complete the current story mission'],
+const CHEAT_CATS = [ // id, icon, title
+  ['health', '❤️', 'Health & protection'],
+  ['weapons', '🔫', 'Weapons'],
+  ['police', '🚨', 'Police & wanted level'],
+  ['cars', '🚗', 'Cars'],
+  ['bikes', '🏍️', 'Bikes'],
+  ['air', '🚁', 'Air & sea'],
+  ['travel', '📍', 'Teleport'],
+  ['world', '🌤️', 'Time & weather'],
+  ['fun', '🚦', 'Traffic & fun'],
+  ['money', '💰', 'Money & casino'],
+  ['story', '⭐', 'Story & dating'],
+  ['reset', '⚙️', 'Reset'],
+];
+const CHEATS = [ // code, what it does, category
+  ['FIXME', 'Full health, armor and car repair', 'health'],
+  ['IRONSKIN', 'Invincible (toggle)', 'health'],
+  ['LOCKNLOAD', 'All weapons (incl. sniper and rocket launcher), full ammo', 'weapons'],
+  ['BOTTOMLESS', 'Infinite ammo (toggle)', 'weapons'],
+  ['CLEANRECORD', 'Clear wanted level', 'police'],
+  ['GHOSTMODE', 'Police ignore you (toggle)', 'police'],
+  ['MOSTWANTED', 'Five-star wanted level', 'police'],
+  ['ROSSO', 'Spawn a Vento S supercar', 'cars'],
+  ['PINKRIDE', 'Spawn a pink Vento S', 'cars'],
+  ['GRANDTOUR', 'Spawn a Vento GT', 'cars'],
+  ['SIRENS', 'Spawn a police cruiser', 'cars'],
+  ['YELLOWCAB', 'Spawn a taxi', 'cars'],
+  ['NITROUS', 'Faster cars (toggle)', 'cars'],
+  ['BIGBANG', 'Blow up all nearby cars', 'cars'],
+  ['PEDALS', 'Spawn a bicycle', 'bikes'],
+  ['SCOOTY', 'Spawn a scooter', 'bikes'],
+  ['DIRTTRAIL', 'Spawn an adventure bike', 'bikes'],
+  ['SUPERBIKE', 'Spawn a sports bike', 'bikes'],
+  ['CHOPPER', 'Spawn a helicopter', 'air'],
+  ['JETSTREAM', 'Fly a stunt plane', 'air'],
+  ['SKYPACK', 'Rocket backpack (toggle; F takes it off)', 'air'],
+  ['SPEEDBOAT', 'Spawn a speedboat on nearby water', 'air'],
+  ['HOMEBASE', 'Teleport to the safehouse', 'travel'],
+  ['HIGHROLLER', 'Teleport to the Neon Palace casino', 'travel'],
+  ['PARADISE', 'Teleport to the island', 'travel'],
+  ['SUMMIT', 'Teleport to the highest mountain', 'travel'],
+  ['AIRFIELD', 'Teleport to the airfield', 'travel'],
+  ['PINEHOLLOW', 'Teleport to Pine Hollow', 'travel'],
+  ['BLUFFS', 'Teleport to Sunset Bluffs', 'travel'],
+  ['COPPER', 'Teleport to Copper Ridge', 'travel'],
+  ['NORTHGATE', 'Teleport to Northgate', 'travel'],
+  ['HIGHNOON', 'Set time to noon', 'world'],
+  ['GOLDENHOUR', 'Set time to sunset', 'world'],
+  ['MIDNIGHT', 'Set time to midnight', 'world'],
+  ['TIMEWARP', 'Skip ahead 6 hours', 'world'],
+  ['SUNSHINE', 'Clear skies', 'world'],
+  ['STORMY', 'Rainstorm (toggle)', 'world'],
+  ['EMPTYSTREETS', 'No traffic or people (toggle)', 'fun'],
+  ['RUSHHOUR', 'Heavy traffic (toggle)', 'fun'],
+  ['SLOWMO', 'Slow motion (toggle)', 'fun'],
+  ['CREWUP', 'Three Palms gang members join you', 'fun'],
+  ['PAYDAY', '+$250,000', 'money'],
+  ['GOLDRUSH', '+$1,000,000', 'money'],
+  ['LUCKYSTREAK', 'Win your next 3 casino rounds', 'money'],
+  ['STORYSKIP', 'Complete the current story mission', 'story'],
+  ['CHARMER', 'Everyone you date adores you', 'story'],
+  ['NOCHEATS', 'Turn off every cheat that is on', 'reset'],
 ];
 G.cheat = { god: false, ammo: false, ghost: false, nitro: false, slow: false, empty: false, rush: false };
 function spawnCheatCar(type, col) {
@@ -4117,10 +4150,10 @@ function updateBikeMesh(c, g, dtR) {
   let tp = 0; if (!inCityFoot(c.x, c.y)) { const ca = Math.cos(c.a), sa = Math.sin(c.a); tp = Math.atan2(groundH(c.x + ca * B.fx, c.y + sa * B.fx) - groundH(c.x + ca * B.rx, c.y + sa * B.rx), B.fx - B.rx); }
   u.tp = lerp(u.tp || 0, tp, .3);
   const fwd = c.vx * Math.cos(c.a) + c.vy * Math.sin(c.a), sp = Math.abs(fwd), ridden = c === player.car || (c.driver && !c.dead);
-  const leanT = ridden ? -(c.steerS || 0) * clamp(sp / 260, 0, 1) * .5 : c.dead ? 1.35 : .14; // lean into turns; parked bikes rest on the stand
+  const leanT = ridden ? (c.steerS || 0) * clamp(sp / 260, 0, 1) * .5 : c.dead ? 1.35 : .14; // lean into the turn (positive steer turns toward +z, positive roll tips the top toward +z); parked bikes rest on the stand
   u.leanV = lerp(u.leanV || 0, leanT, Math.min(1, dtR * 6));
   g.rotation.set(0, -c.a, u.tp, 'YXZ'); u.lean.rotation.set(u.leanV, 0, 0);
-  u.spin -= fwd * dtR / B.R; u.fw.rotation.set(0, (c.steerV || 0) * .35, u.spin, 'YXZ'); u.rw.rotation.set(0, 0, u.spin);
+  u.spin -= fwd * dtR / B.R; u.fw.rotation.set(0, -(c.steerV || 0) * .35, u.spin, 'YXZ'); u.rw.rotation.set(0, 0, u.spin);
   u.pedal += fwd * dtR / 6;
   const d = dist(c.x, c.y, cam.x, cam.y); g.visible = d < 1550; u.sh.visible = !QUAL.high;
   // riders: you, an NPC rider in traffic, or a crew passenger
@@ -4193,7 +4226,7 @@ function updateCarMesh(c, g, dtR) {
   const near = d < 650;
   u.body.visible = u.glass.visible = d < 330; u.bodyLo.visible = u.glassLo.visible = !u.body.visible;
   updateSeats(c, u.pivot, u, -6);
-  for (const w of u.wheels) { w.visible = near; w.rotation.set(0, w.userData.front ? (c.steerV || 0) * .45 : 0, u.spin, 'YXZ'); }
+  for (const w of u.wheels) { w.visible = near; w.rotation.set(0, w.userData.front ? -(c.steerV || 0) * .45 : 0, u.spin, 'YXZ'); }
   u.sh.visible = !QUAL.high;
   u.cone.visible = nightF > .3 && c.driver && !c.dead && d < 900;
   if (u.lb) {
@@ -5153,19 +5186,37 @@ const fsLabel = () => { $('btnFull').textContent = document.fullscreenElement ? 
 $('btnFull').onclick = () => { try { const r = document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen(); if (r && r.then) r.then(fsLabel, () => { $('btnFull').textContent = 'Fullscreen not available here'; }); } catch (e) { $('btnFull').textContent = 'Fullscreen not available here'; } };
 document.addEventListener('fullscreenchange', fsLabel);
 $('cheatsOff').onclick = () => tryCheat('NOCHEATS');
-$('btnCheats').onclick = () => { renderCheatList(); $('pause').classList.add('hidden'); $('cheats').classList.remove('hidden'); $('cheatMsg').textContent = ''; $('cheatInput').value = ''; };
+$('btnCheats').onclick = () => { $('cheatInput').value = ''; renderCheatList(); $('pause').classList.add('hidden'); $('cheats').classList.remove('hidden'); $('cheatMsg').textContent = ''; };
 $('cheatBack').onclick = () => { $('cheats').classList.add('hidden'); $('pause').classList.remove('hidden'); };
 const tryCheat = code => { const r = runCheat(code); renderCheatList(); $('cheatMsg').textContent = r ? 'Activated: ' + r : 'Unknown code'; $('cheatMsg').style.color = r ? '#7dffb0' : '#ff8a8a'; };
-$('cheatGo').onclick = () => { tryCheat($('cheatInput').value); $('cheatInput').value = ''; };
-$('cheatInput').addEventListener('keydown', e => { if (e.key === 'Enter') { tryCheat(e.target.value); e.target.value = ''; } });
-$('cheatShow').onclick = () => { const l = $('cheatList'); l.classList.toggle('hidden'); $('cheatShow').textContent = l.classList.contains('hidden') ? 'Show code list' : 'Hide code list'; };
+$('cheatGo').onclick = () => { const v = $('cheatInput').value; $('cheatInput').value = ''; tryCheat(v); };
+$('cheatInput').addEventListener('keydown', e => { if (e.key === 'Enter') { const v = e.target.value; e.target.value = ''; tryCheat(v); } });
+let cheatTab = 'all';
+try { cheatTab = localStorage.getItem('neoncoast.cheattab') || 'all'; } catch (e) { }
+$('cheatInput').addEventListener('input', () => renderCheatList());
 function renderCheatList() {
-  const l = $('cheatList'); l.innerHTML = '';
-  for (const [code, desc] of CHEATS) {
-    const on = CHEAT_ON[code] && CHEAT_ON[code](), b = document.createElement('button');
-    const t = document.createElement('b'); t.textContent = code + (on ? '  ● ON' : ''); b.appendChild(t); b.appendChild(document.createTextNode(on ? 'Tap to turn off' : desc));
-    if (on) b.classList.add('on'); b.onclick = () => tryCheat(code); l.appendChild(b);
+  const tabs = $('cheatTabs'), l = $('cheatList'), q = ($('cheatInput').value || '').trim().toLowerCase();
+  tabs.innerHTML = ''; l.innerHTML = '';
+  for (const [id, icon, title] of [['all', '☰', 'All']].concat(CHEAT_CATS)) {
+    const b = document.createElement('button'); b.className = 'ccChip' + (cheatTab === id && !q ? ' on' : ''); b.textContent = icon + ' ' + title.split(' & ')[0];
+    b.onclick = () => { cheatTab = id; $('cheatInput').value = ''; try { localStorage.setItem('neoncoast.cheattab', id); } catch (e) { } renderCheatList(); };
+    tabs.appendChild(b);
   }
+  let shown = 0;
+  for (const [id, icon, title] of CHEAT_CATS) {
+    if (!q && cheatTab !== 'all' && cheatTab !== id) continue;
+    const list = CHEATS.filter(([code, desc, cat]) => cat === id && (!q || code.toLowerCase().includes(q) || desc.toLowerCase().includes(q)));
+    if (!list.length) continue;
+    const sec = document.createElement('div'); sec.className = 'cheatSec';
+    const h = document.createElement('div'); h.className = 'cheatHead'; h.textContent = icon + '  ' + title; sec.appendChild(h);
+    for (const [code, desc] of list) {
+      const on = CHEAT_ON[code] && CHEAT_ON[code](), b = document.createElement('button');
+      const t = document.createElement('b'); t.textContent = code + (on ? '  ● ON' : ''); b.appendChild(t); b.appendChild(document.createTextNode(on ? 'Tap to turn off' : desc));
+      if (on) b.classList.add('on'); b.onclick = () => tryCheat(code); sec.appendChild(b); shown++;
+    }
+    l.appendChild(sec);
+  }
+  if (!shown) { const d = document.createElement('div'); d.style.opacity = '.75'; d.textContent = q ? 'No cheat matches "' + q + '". Press OK to try it as a code.' : 'No cheats here.'; l.appendChild(d); }
   const act = activeCheats(), box = $('cheatActive'); box.innerHTML = '';
   if (!act.length) box.textContent = 'No cheats are on.';
   else { const t = document.createElement('div'); t.textContent = 'ON now (tap to turn off):'; box.appendChild(t); for (const k of act) { const b = document.createElement('button'); b.className = 'ccChip on'; b.textContent = CHEAT_NAME[k] + '  ✕'; b.onclick = () => tryCheat(k); box.appendChild(b); } }
@@ -5181,11 +5232,11 @@ buildMinimap();
 resize();
 init3D();
 requestAnimationFrame(frame);
-window.__NC = { G, player, places, startGame, press: k => { pressed[k] = true; }, hurt: (p, d) => hurtPed(p, d, true, p.x, p.y), get STORY() { return STORY; }, get ISL() { return ISL; }, enterCasino: () => enterCasino(), get table() { return table; }, get inputMode() { return inputMode; }, mouse, get roads() { return roads; }, summit, AIRF, TOWN, makeCar: (...a) => makeCar(...a), cheat: c => runCheat(c), setYaw: v => { camYaw = v; camDragT = 99; }, get scene() { return scene; }, get R3() { return R3; }, get cars() { return cars; }, get peds() { return peds; }, get rockets() { return rockets; }, spawnCopHeli: (x, y) => spawnCopHeli(x, y), isScoped: () => isScoped(), mapToS: (x, y) => mapToS(x, y, mapGeom()), MV, drive: (c, thr, steer, hb, dt) => drivePhysics(c, thr, steer, hb, dt), shoot: () => shoot(), SATS, WEAPONS, CARTYPES, setPin: (x, y) => setPin(x, y), get route() { return G.route; }, activeCheats: () => activeCheats(), groundH: (x, y) => groundH(x, y), terrainH: (x, y) => terrainH(x, y), enterCar: c => enterCar(c), floorAt: (x, y, z) => floorAt(x, y, z), roofAt: (x, y) => roofAt(x, y), get look() { return PLOOK; }, get playerMesh() { return playerMesh; }, get Hgrid() { return Hgrid; }, MAPX0, TG, TN };
+window.__NC = { G, player, places, startGame, press: k => { pressed[k] = true; }, hurt: (p, d) => hurtPed(p, d, true, p.x, p.y), get STORY() { return STORY; }, get ISL() { return ISL; }, enterCasino: () => enterCasino(), get table() { return table; }, get inputMode() { return inputMode; }, mouse, get roads() { return roads; }, summit, AIRF, TOWN, makeCar: (...a) => makeCar(...a), cheat: c => runCheat(c), setYaw: v => { camYaw = v; camDragT = 99; }, get scene() { return scene; }, get R3() { return R3; }, get cars() { return cars; }, get peds() { return peds; }, get rockets() { return rockets; }, spawnCopHeli: (x, y) => spawnCopHeli(x, y), isScoped: () => isScoped(), mapToS: (x, y) => mapToS(x, y, mapGeom()), MV, drive: (c, thr, steer, hb, dt) => drivePhysics(c, thr, steer, hb, dt), carMesh: c => carMeshes.get(c), get CHEATS() { return CHEATS; }, CHEAT_CATS, shoot: () => shoot(), SATS, WEAPONS, CARTYPES, setPin: (x, y) => setPin(x, y), get route() { return G.route; }, activeCheats: () => activeCheats(), groundH: (x, y) => groundH(x, y), terrainH: (x, y) => terrainH(x, y), enterCar: c => enterCar(c), floorAt: (x, y, z) => floorAt(x, y, z), roofAt: (x, y) => roofAt(x, y), get look() { return PLOOK; }, get playerMesh() { return playerMesh; }, get Hgrid() { return Hgrid; }, MAPX0, TG, TN };
 
 // version label + updates: the page always asks GitHub for the newest files when online (see sw.js);
 // if a new version arrives while the game is open, the menu offers a one-tap update
-const GAME_VERSION = 'v10.5';
+const GAME_VERSION = 'v10.6';
 for (const el of document.querySelectorAll('.ver')) el.textContent = GAME_VERSION + ' · bikes, easier driving, zoomable map, new cities, police helicopters';
 $('btnUpdate').onclick = () => { save(); location.reload(); };
 if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
