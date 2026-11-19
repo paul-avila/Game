@@ -30,6 +30,7 @@ The game picks the right layout automatically: touch buttons on phones and table
 | Play a casino table | F | PLAY |
 | Next line of dialogue | Click, Space or Enter | Tap |
 | Map | Tab | Tap minimap |
+| Zoom / move the big map | Mouse wheel (or trackpad pinch), + / − keys or buttons, drag; arrow keys move; ◎ centers on you | Pinch with two fingers, + / − buttons, drag with one finger; ◎ centers on you |
 | Drop / remove a map pin | Open the map, click a spot (click the pin again to remove it) | Open the map, tap a spot |
 | Close the map | Tab, Esc, ✕ or click outside the map | ✕ or tap outside the map |
 | Pause | Esc | II |
@@ -40,6 +41,7 @@ The game picks the right layout automatically: touch buttons on phones and table
 - Detailed procedurally modeled cars: two Italian-style supercars (mid-engine Vento S, front-engine Vento GT), coupe, sedan, taxi, van, police; spoked wheels with brake calipers, body roll and nose-dive
 - **Realistic people**: sculpted faces (brow, eyes with lids, nose, lips, jaw, ears), natural hairlines and hairstyles (short, buzz, curly, long, ponytail, bun), stubble and beards, muscle-shaped arms and legs, hands with thumbs, sneakers, and printed clothing (palm, hibiscus, floral, stripes, denim). Distant people switch to a lighter model to keep phones fast.
 - **Character creator** (main menu → Character, or Pause → Character): name, man/woman, build, skin tone, hair style and color, facial hair, top, print, colors, bottoms, shoes and accessories, with a face close-up. Your look is saved and used in the story's dialogue.
+- **Zoomable map**: zoom from the whole region down to single streets (streets and buildings stay sharp), drag to move, scale bar; the minimap zooms out when you drive fast or fly.
 - **Map pins with GPS**: open the map, tap anywhere to drop a pin; a purple route follows the roads (dashed line when there's no road, such as to the island), a light beam marks the spot, and the HUD shows distance and direction. The pin clears when you arrive.
 - Traffic AI, pedestrians, parked cars, carjacking, crashes, fires and explosions
 - 5-star wanted system: patrols, pursuits, foot cops, busted / wasted, Respray garage. At 3 stars a **police helicopter** joins the chase (two at 5 stars): it circles overhead, a cop shoots from the door, and at night it lights you up with a searchlight. Shoot it down (rifle, sniper or rocket launcher) or outrun it.

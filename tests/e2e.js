@@ -159,10 +159,21 @@ const check = (name, cond, info = '') => { results.push([cond ? 'PASS' : 'FAIL',
   // ---- Map pin + GPS route
   await E(() => { __NC.cheat('HOMEBASE'); }); await wait(300);
   await p.keyboard.press('Tab'); await wait(300);
-  const mp = await E(() => { const [a, b] = __NC.G.bigMapT.toS(5200, 900); return { a, b }; });
+  await E(() => { __NC.MV.z = 1; }); const mp = await E(() => { const [a, b] = __NC.mapToS(5200, 900); return { a, b }; });
   await p.mouse.click(mp.a, mp.b); await wait(300);
   const pin = await E(() => ({ pin: __NC.G.pin, road: __NC.route && __NC.route.road, n: __NC.route && __NC.route.pts.length }));
   check('clicking the map drops a pin with a road route', !!pin.pin && pin.road && pin.n > 3, JSON.stringify({ n: pin.n }));
+  const z0 = await E(() => __NC.MV.z);
+  await p.mouse.move(640, 380); for (let k = 0; k < 3; k++) { await p.mouse.wheel(0, -100); await wait(150); } await wait(200);
+  const z1 = await E(() => __NC.MV.z);
+  check('mouse wheel zooms the map in', z1 > z0 * 2.2, z0.toFixed(2) + ' → ' + z1.toFixed(2));
+  const c0 = await E(() => [__NC.MV.cx, __NC.MV.cy]);
+  await p.mouse.move(640, 380); await p.mouse.down(); await p.mouse.move(520, 300, { steps: 5 }); await p.mouse.up(); await wait(200);
+  const c1 = await E(() => [__NC.MV.cx, __NC.MV.cy]);
+  check('dragging pans the zoomed map (no pin moved)', c1[0] > c0[0] && c1[1] > c0[1] && await E(() => Math.hypot(__NC.G.pin.x - 5200, __NC.G.pin.y - 900) < 60), JSON.stringify([c0.map(Math.round), c1.map(Math.round)]));
+  await p.mouse.click(1250, 116); await wait(200);
+  check('− button zooms out', (await E(() => __NC.MV.z)) < z1);
+  await E(() => { __NC.MV.z = 1; });
   await p.mouse.click(4, 700); await wait(200);
   check('clicking outside closes the map', await E(() => !__NC.G.bigMap));
   await E(() => { const P = __NC.player; P.x = 5200 - 60; P.y = 900; }); 

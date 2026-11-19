@@ -1,5 +1,5 @@
 // Offline cache for Neon Coast. Bump VERSION when files change.
-const VERSION = 'neoncoast-v10.1';
+const VERSION = 'neoncoast-v10.2';
 const FILES = ['./', './index.html', './manifest.webmanifest', './icon.svg', './icon-192.png', './icon-512.png', './three.min.js'];
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(VERSION).then(c => c.addAll(FILES.map(f => new Request(f, { cache: 'reload' })))).then(() => self.skipWaiting()));

@@ -154,6 +154,7 @@
       <tr><td>Play a casino table</td><td><kbd>F</kbd></td><td>PLAY</td></tr>
       <tr><td>Next line of dialogue</td><td>Click, <kbd>Space</kbd> or <kbd>Enter</kbd></td><td>Tap</td></tr>
       <tr><td>Map</td><td><kbd>Tab</kbd></td><td>Tap minimap</td></tr>
+      <tr><td>Zoom / move the map</td><td>Mouse wheel, <kbd>+</kbd> <kbd>−</kbd>, drag</td><td>Pinch, + −, drag</td></tr>
       <tr><td>Drop / remove pin</td><td>Open map, click a spot / the pin</td><td>Open map, tap</td></tr>
       <tr><td>Pause</td><td><kbd>Esc</kbd></td><td>II</td></tr>
       <tr><td>Cheats</td><td>Type a code any time</td><td>Pause → Cheats</td></tr>
@@ -452,6 +453,11 @@ function buildMinimap() {
   m.imageSmoothingEnabled = true;
   m.drawImage(tc, (MAPX0 - TG / 2 - MO) * MMS, (MAPX0 - TG / 2 - MO) * MMS, TN * TG * MMS, TN * TG * MMS);
   m.save(); m.scale(MMS, MMS); m.translate(-MO, -MO);
+  drawCityVector(m);
+  m.restore();
+}
+const MMO = () => MAPX0 - 200;
+function drawCityVector(m) { // streets, blocks, buildings in world units
   m.fillStyle = '#2b2b33'; m.fillRect(-HR, -HR, WORLD + ROAD, WORLD + ROAD);
   for (const b of blocks) {
     m.fillStyle = '#5a5d66'; m.fillRect(b.x0, b.y0, b.x1 - b.x0, b.y1 - b.y0);
@@ -467,9 +473,7 @@ function buildMinimap() {
     if (R.hw < 50 && R.hw > 30) { m.strokeStyle = '#d9b84a'; m.lineWidth = 10; m.stroke(); }
   }
   for (const q of props) { m.fillStyle = q.label ? '#ff8ac0' : '#b8b2a4'; m.fillRect(q.x, q.y, q.w, q.h); }
-  m.restore();
 }
-const MMO = () => MAPX0 - 200;
 
 // ================================================================ map pin + GPS route
 let GPS = null;
@@ -523,13 +527,53 @@ function updatePin(dt) {
   else G.route.pts[0] = { x: px, y: py };
 }
 const fmtDist = d => d < 10000 ? Math.round(d / 10) + ' m' : (d / 10000).toFixed(1) + ' km';
-function openBigMap() { G.bigMap = true; unlockMouse(); }
+const MV = { z: 1, cx: 0, cy: 0, ptrs: new Map(), drag: null, pinch: null };
+function mapGeom() { const fs = Math.min((W - 30) / mmCanvas.width, (H - 50) / mmCanvas.height); return { fs, k: MMS * fs * MV.z, vx: W / 2, vy: 34 + mmCanvas.height * fs / 2, size: mmCanvas.width / MMS }; }
+const mapToS = (x, y, g) => [g.vx + (x - MV.cx) * g.k, g.vy + (y - MV.cy) * g.k];
+const mapToW = (sx, sy, g) => [MV.cx + (sx - g.vx) / g.k, MV.cy + (sy - g.vy) / g.k];
+function clampMapView() {
+  MV.z = clamp(MV.z, 1, 14); const g = mapGeom(), lo = MMO(), hi = lo + g.size;
+  if (MV.z <= 1.001) { MV.cx = MV.cy = lo + g.size / 2; return; }
+  MV.cx = clamp(MV.cx, lo, hi); MV.cy = clamp(MV.cy, lo, hi);
+}
+function zoomMapAt(f, sx, sy) {
+  const g0 = mapGeom(), [wx, wy] = mapToW(sx, sy, g0);
+  MV.z = clamp(MV.z * f, 1, 14); const g1 = mapGeom();
+  MV.cx = wx - (sx - g1.vx) / g1.k; MV.cy = wy - (sy - g1.vy) / g1.k; clampMapView();
+}
+function centerMapOnMe() { MV.cx = player.car ? player.car.x : player.x; MV.cy = player.car ? player.car.y : player.y; if (MV.z < 3) MV.z = 3; clampMapView(); }
+function mapPointerDown(e) {
+  MV.ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  if (MV.ptrs.size === 1) MV.drag = { id: e.pointerId, x0: e.clientX, y0: e.clientY, cx0: MV.cx, cy0: MV.cy, moved: false };
+  else if (MV.ptrs.size === 2) { const [a, b] = [...MV.ptrs.values()]; MV.pinch = { d0: Math.max(10, Math.hypot(a.x - b.x, a.y - b.y)), z0: MV.z }; if (MV.drag) MV.drag.moved = true; }
+}
+function mapPointerMove(e) {
+  if (!MV.ptrs.has(e.pointerId)) return;
+  MV.ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  if (MV.pinch && MV.ptrs.size >= 2) { const [a, b] = [...MV.ptrs.values()]; zoomMapAt(MV.pinch.z0 * Math.hypot(a.x - b.x, a.y - b.y) / MV.pinch.d0 / MV.z, (a.x + b.x) / 2, (a.y + b.y) / 2); return; }
+  const D = MV.drag; if (!D || D.id !== e.pointerId) return;
+  const dx = e.clientX - D.x0, dy = e.clientY - D.y0;
+  if (!D.moved && Math.hypot(dx, dy) > 8) D.moved = true;
+  if (D.moved && MV.z > 1.001) { const g = mapGeom(); MV.cx = D.cx0 - dx / g.k; MV.cy = D.cy0 - dy / g.k; clampMapView(); }
+}
+function mapPointerUp(e, cancel) {
+  if (!MV.ptrs.has(e.pointerId)) return;
+  MV.ptrs.delete(e.pointerId);
+  if (MV.ptrs.size < 2) MV.pinch = null;
+  const D = MV.drag;
+  if (D && D.id === e.pointerId) { MV.drag = null; if (!D.moved && !cancel) mapClick(e.clientX, e.clientY); }
+  if (MV.ptrs.size === 1 && !MV.drag) { const [id, q] = [...MV.ptrs.entries()][0]; MV.drag = { id, x0: q.x, y0: q.y, cx0: MV.cx, cy0: MV.cy, moved: true }; }
+}
+const MAPBTN = () => [['+', W - 30, 72], ['−', W - 30, 116], ['◎', W - 30, 160]];
+function openBigMap() { G.bigMap = true; unlockMouse(); MV.ptrs.clear(); MV.drag = MV.pinch = null; if (MV.z > 1.001) centerMapOnMe(); else clampMapView(); }
 function closeBigMap() { G.bigMap = false; if (G.state === 'play') tryLock(); }
 function mapClick(cx, cy) {
-  const T = G.bigMapT;
-  if (!T || dist(cx, cy, W - 30, 22) < 24 || cx < T.ox || cx > T.ox + T.mw || cy < T.oy || cy > T.oy + T.mw) { closeBigMap(); return; }
-  if (G.pin) { const [a, b] = T.toS(G.pin.x, G.pin.y); if (dist(a, b, cx, cy) < 20) { clearPin(); return; } }
-  setPin(MMO() + (cx - T.ox) / (MMS * T.fs), MMO() + (cy - T.oy) / (MMS * T.fs));
+  const g = mapGeom();
+  for (const [lab, bx, by] of MAPBTN()) if (dist(cx, cy, bx, by) < 21) { if (lab === '+') zoomMapAt(1.6, g.vx, g.vy); else if (lab === '−') zoomMapAt(1 / 1.6, g.vx, g.vy); else centerMapOnMe(); return; }
+  const [x0, y0] = mapToS(MMO(), MMO(), g), [x1, y1] = mapToS(MMO() + g.size, MMO() + g.size, g);
+  if (dist(cx, cy, W - 30, 22) < 24 || cx < Math.max(0, x0) || cx > Math.min(W, x1) || cy < Math.max(30, y0) || cy > Math.min(H, y1)) { closeBigMap(); return; }
+  if (G.pin) { const [a, b] = mapToS(G.pin.x, G.pin.y, g); if (dist(a, b - 14, cx, cy) < 22) { clearPin(); return; } }
+  const [wx, wy] = mapToW(cx, cy, g); setPin(wx, wy);
 }
 
 // ================================================================ entities
@@ -1890,7 +1934,7 @@ document.addEventListener('pointerlockchange', () => {
 });
 cv.addEventListener('contextmenu', e => e.preventDefault());
 document.addEventListener('pointerlockerror', () => { mouse.lockFailed = true; });
-cv.addEventListener('wheel', e => { e.preventDefault(); if (G.state !== 'play') return; const n = performance.now(); if (n - (mouse.wheelT || 0) > 160) { mouse.wheelT = n; pressed.wpn = true; } }, { passive: false });
+cv.addEventListener('wheel', e => { e.preventDefault(); if (G.bigMap) { zoomMapAt(Math.exp(-clamp(e.deltaY, -120, 120) * (e.ctrlKey ? .01 : .0034)), e.clientX, e.clientY); return; } if (G.state !== 'play') return; const n = performance.now(); if (n - (mouse.wheelT || 0) > 160) { mouse.wheelT = n; pressed.wpn = true; } }, { passive: false });
 const joy = { id: null, bx: 0, by: 0, x: 0, y: 0, vx: 0, vy: 0, active: false };
 const btn = {};
 function layoutButtons() {
@@ -1910,7 +1954,7 @@ const pressed = {}; // one-shot presses
 cv.addEventListener('pointerdown', e => {
   e.preventDefault(); initAudio();
   if (G.state === 'creator') { look.id = e.pointerId; look.x = e.clientX; return; }
-  if (G.bigMap) { mapClick(e.clientX, e.clientY); return; }
+  if (G.bigMap) { mapPointerDown(e); return; }
   if (G.state !== 'play' && G.state !== 'casino') return;
   if (!mouse.locked) { const mr = clamp(Math.min(W, H) * .17, 52, 86); if (dist(e.clientX, e.clientY, 12 + mr, 10 + mr) < mr + 6) { openBigMap(); return; } }
   if (e.pointerType === 'mouse') {
@@ -1934,6 +1978,7 @@ cv.addEventListener('pointerdown', e => {
   } else if (look.id === null) { look.id = e.pointerId; look.x = e.clientX; look.y = e.clientY; }
 }, { passive: false });
 cv.addEventListener('pointermove', e => {
+  if (G.bigMap) { mapPointerMove(e); return; }
   if (G.state === 'creator') { if (e.pointerId === look.id) { G.ccSpin = (G.ccSpin || 0) + (e.clientX - look.x) * .012; look.x = e.clientX; } return; }
   if (mouse.locked && e.pointerType === 'mouse') {
     if (Math.abs(e.movementX) > 250 || Math.abs(e.movementY) > 250) return; // ignore capture spikes
@@ -1952,6 +1997,7 @@ cv.addEventListener('pointermove', e => {
   }
 }, { passive: false });
 function endPtr(e) {
+  if (G.bigMap || MV.ptrs.has(e.pointerId)) { mapPointerUp(e, e.type !== 'pointerup'); if (G.bigMap) return; }
   if (e.pointerType === 'mouse' && e.type !== 'pointerleave') { if (e.button === 0) mouse.fire = false; if (e.button === 2) mouse.aim = false; }
   if (e.pointerId === joy.id) { joy.id = null; joy.active = false; joy.vx = joy.vy = 0; }
   if (e.pointerId === look.id) look.id = null;
@@ -1966,7 +2012,11 @@ window.addEventListener('keydown', e => {
   if (G.state === 'talk' && dlg && [' ', 'enter', 'f', 'e'].includes(k)) { e.preventDefault(); if (!keys[k]) advanceDialog(); keys[k] = true; return; }
   if (G.state === 'table' && k === 'escape') { closeTable(); return; }
   if (/^[a-z]$/.test(k) && G.state !== 'menu') cheatKey(k.toUpperCase());
-  if (k === 'tab' && (G.state === 'play' || G.bigMap)) { e.preventDefault(); if (G.bigMap) closeBigMap(); else openBigMap(); return; } if (k === 'escape' && G.bigMap) { closeBigMap(); return; } if (!keys[k]) { if (k === 'e' || k === 'f') pressed.car = true; if (k === 'g') pressed.gang = true; if (k === 'q') pressed.wpn = true; if (/^[1-7]$/.test(k) && G.state === 'play') pressed.pick = +k - 1; if (k === 'escape') { if (G.state === 'paused' && !$('pause').classList.contains('hidden')) resumeGame(); else pressed.pause = true; } }
+  if (k === 'tab' && (G.state === 'play' || G.bigMap)) { e.preventDefault(); if (G.bigMap) closeBigMap(); else openBigMap(); return; } if (k === 'escape' && G.bigMap) { closeBigMap(); return; }
+  if (G.bigMap) { const g = mapGeom(), step = Math.min(W, H) * .25 / g.k;
+    if (k === '+' || k === '=') zoomMapAt(1.5, g.vx, g.vy); else if (k === '-' || k === '_') zoomMapAt(1 / 1.5, g.vx, g.vy);
+    else if (k === 'arrowleft') MV.cx -= step; else if (k === 'arrowright') MV.cx += step; else if (k === 'arrowup') MV.cy -= step; else if (k === 'arrowdown') MV.cy += step; else return;
+    clampMapView(); e.preventDefault(); return; } if (!keys[k]) { if (k === 'e' || k === 'f') pressed.car = true; if (k === 'g') pressed.gang = true; if (k === 'q') pressed.wpn = true; if (/^[1-7]$/.test(k) && G.state === 'play') pressed.pick = +k - 1; if (k === 'escape') { if (G.state === 'paused' && !$('pause').classList.contains('hidden')) resumeGame(); else pressed.pause = true; } }
   keys[k] = true; if ([' ', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright'].includes(k)) e.preventDefault();
 });
 window.addEventListener('keyup', e => { keys[e.key.toLowerCase()] = false; });
@@ -4661,10 +4711,14 @@ function hudText(t, x, y, size, col, align = 'left', weight = 800) {
 }
 function drawBigMap() {
   ctx.fillStyle = 'rgba(5,8,20,.88)'; ctx.fillRect(0, 0, W, H);
-  const fs = Math.min((W - 30) / mmCanvas.width, (H - 50) / mmCanvas.height), mw = mmCanvas.width * fs, ox = (W - mw) / 2, oy = 34;
-  ctx.drawImage(mmCanvas, ox, oy, mw, mw);
-  const toS = (x, y) => [ox + (x - MMO()) * MMS * fs, oy + (y - MMO()) * MMS * fs];
-  G.bigMapT = { ox, oy, mw, fs, toS };
+  const g = mapGeom(), toS = (x, y) => mapToS(x, y, g);
+  ctx.save(); ctx.beginPath(); ctx.rect(0, 30, W, H - 46); ctx.clip();
+  { // only the visible part of the prerendered map
+    const [wx0, wy0] = mapToW(0, 30, g), [wx1, wy1] = mapToW(W, H - 16, g), MO = MMO();
+    const sx0 = clamp((wx0 - MO) * MMS, 0, mmCanvas.width), sy0 = clamp((wy0 - MO) * MMS, 0, mmCanvas.height), sx1 = clamp((wx1 - MO) * MMS, 0, mmCanvas.width), sy1 = clamp((wy1 - MO) * MMS, 0, mmCanvas.height);
+    if (sx1 > sx0 && sy1 > sy0) { const [dx0, dy0] = toS(MO + sx0 / MMS, MO + sy0 / MMS), [dx1, dy1] = toS(MO + sx1 / MMS, MO + sy1 / MMS); ctx.imageSmoothingEnabled = true; ctx.drawImage(mmCanvas, sx0, sy0, sx1 - sx0, sy1 - sy0, dx0, dy0, dx1 - dx0, dy1 - dy0); }
+  }
+  if (MV.z >= 2.2) { ctx.save(); ctx.translate(g.vx - MV.cx * g.k, g.vy - MV.cy * g.k); ctx.scale(g.k, g.k); drawCityVector(ctx); ctx.restore(); }
   if (G.pin && G.route) { ctx.beginPath(); G.route.pts.forEach((q, i) => { const [a, b] = toS(q.x, q.y); if (i) ctx.lineTo(a, b); else ctx.moveTo(a, b); }); ctx.lineJoin = ctx.lineCap = 'round'; ctx.setLineDash(G.route.road ? [] : [7, 6]); ctx.strokeStyle = 'rgba(0,0,0,.6)'; ctx.lineWidth = 6; ctx.stroke(); ctx.strokeStyle = '#c86bff'; ctx.lineWidth = 3.5; ctx.stroke(); ctx.setLineDash([]); }
   const dot = (x, y, col, r = 5, lab) => { const [a, b] = toS(x, y); ctx.fillStyle = col; ctx.beginPath(); ctx.arc(a, b, r, 0, TAU); ctx.fill(); ctx.strokeStyle = '#000'; ctx.lineWidth = 1.5; ctx.stroke(); if (lab) hudText(lab, a, b - r - 8, 11, '#fff', 'center', 700); };
   if (!G.mission) for (const j of places.jobs) if (j.cd <= 0) dot(j.x, j.y, '#2ee87a', 5);
@@ -4681,10 +4735,17 @@ function drawBigMap() {
   ctx.fillStyle = '#fff'; ctx.strokeStyle = '#000'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(10, 0); ctx.lineTo(-7, -7); ctx.lineTo(-3, 0); ctx.lineTo(-7, 7); ctx.closePath(); ctx.fill(); ctx.stroke(); ctx.restore();
   if (G.pin) { const [a, b] = toS(G.pin.x, G.pin.y); ctx.fillStyle = '#c86bff'; ctx.strokeStyle = '#000'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(a, b); ctx.bezierCurveTo(a - 12, b - 14, a - 9, b - 28, a, b - 28); ctx.bezierCurveTo(a + 9, b - 28, a + 12, b - 14, a, b); ctx.fill(); ctx.stroke(); ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(a, b - 19, 4, 0, TAU); ctx.fill();
     hudText(fmtDist(G.route ? G.route.len : dist(px, py, G.pin.x, G.pin.y)) + (G.route && !G.route.road ? ' (no road: take a boat or fly)' : ''), a, b - 38, 12, '#e0b8ff', 'center', 800); }
-  const tap = inputMode === 'touch' ? 'Tap' : 'Click';
-  hudText(G.pin ? `${tap} the map to move the pin · ${tap} the pin to remove it` : `${tap} the map to drop a pin`, W / 2, 18, 14, '#fff', 'center');
+  ctx.restore();
+  const tap = inputMode === 'touch' ? 'Tap' : 'Click', zoomHow = inputMode === 'touch' ? 'Pinch to zoom' : 'Scroll to zoom';
+  hudText(`${zoomHow} · drag to move · ${tap.toLowerCase()} to ${G.pin ? 'move the pin (tap the pin to remove it)' : 'drop a pin'}`, W / 2, 18, W < 700 ? 11 : 14, '#fff', 'center');
+  for (const [lab, bx, by] of MAPBTN()) { ctx.fillStyle = 'rgba(255,255,255,.16)'; ctx.beginPath(); ctx.arc(bx, by, 18, 0, TAU); ctx.fill(); ctx.strokeStyle = 'rgba(255,255,255,.6)'; ctx.lineWidth = 1.5; ctx.stroke(); hudText(lab, bx, by + 1, lab === '◎' ? 18 : 24, '#fff', 'center', 800); }
+  { // scale bar
+    const m10 = g.k * 10, opts = [50, 100, 250, 500, 1000, 2000, 5000]; let len = opts[opts.length - 1]; for (const o of opts) if (o * m10 >= 70) { len = o; break; }
+    const px = len * m10, bx = 16, by = H - 30; ctx.fillStyle = 'rgba(0,0,0,.55)'; ctx.fillRect(bx - 4, by - 16, px + 8, 24); ctx.fillStyle = '#fff'; ctx.fillRect(bx, by, px, 3); ctx.fillRect(bx, by - 5, 2, 8); ctx.fillRect(bx + px - 2, by - 5, 2, 8);
+    hudText(len >= 1000 ? len / 1000 + ' km' : len + ' m', bx + px / 2, by - 8, 11, '#fff', 'center', 700);
+  }
   ctx.fillStyle = 'rgba(255,255,255,.14)'; ctx.beginPath(); ctx.arc(W - 30, 22, 17, 0, TAU); ctx.fill(); ctx.strokeStyle = '#fff'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.moveTo(W - 36, 16); ctx.lineTo(W - 24, 28); ctx.moveTo(W - 24, 16); ctx.lineTo(W - 36, 28); ctx.stroke();
-  hudText(inputMode === 'touch' ? 'Tap outside the map or ✕ to close' : 'Tab or Esc to close', W / 2, H - 9, 11, 'rgba(255,255,255,.75)', 'center', 600);
+  hudText(inputMode === 'touch' ? (MV.z > 1.001 ? 'Tap ✕ to close' : 'Tap outside the map or ✕ to close') : 'Tab or Esc to close · + / − keys zoom · arrow keys move', W / 2, H - 9, 11, 'rgba(255,255,255,.75)', 'center', 600);
 }
 function drawScope() {
   const r = Math.min(W, H) * .44, cx = W / 2, cy = H / 2;
@@ -4705,7 +4766,9 @@ function drawHUD() {
   const mx = pad + mr, my = safeT + mr;
   ctx.save();
   ctx.beginPath(); ctx.arc(mx, my, mr, 0, TAU); ctx.clip();
-  const span = 1500; const s = (mr * 2) / span, rot = -Math.PI / 2 - camYaw;
+  { const c = player.car, sp = c ? Math.hypot(c.vx, c.vy) : 0, alt = c && c.T.fly ? c.z - groundH(c.x, c.y) : player.jet ? player.z - groundH(player.x, player.y) : 0;
+    const want = 1500 + clamp(sp, 0, 600) * 1.4 + clamp(alt, 0, 1500) * 1.6; G.mmSpan = lerp(G.mmSpan || 1500, want, .03); }
+  const span = G.mmSpan; const s = (mr * 2) / span, rot = -Math.PI / 2 - camYaw;
   ctx.fillStyle = '#1d6fa8'; ctx.fillRect(mx - mr, my - mr, mr * 2, mr * 2);
   ctx.translate(mx, my); ctx.rotate(rot);
   ctx.drawImage(mmCanvas, -(cam.x - MMO()) * s, -(cam.y - MMO()) * s, mmCanvas.width * s / MMS, mmCanvas.height * s / MMS);
@@ -4946,12 +5009,12 @@ buildMinimap();
 resize();
 init3D();
 requestAnimationFrame(frame);
-window.__NC = { G, player, places, startGame, press: k => { pressed[k] = true; }, hurt: (p, d) => hurtPed(p, d, true, p.x, p.y), get STORY() { return STORY; }, get ISL() { return ISL; }, enterCasino: () => enterCasino(), get table() { return table; }, get inputMode() { return inputMode; }, mouse, get roads() { return roads; }, summit, AIRF, TOWN, makeCar: (...a) => makeCar(...a), cheat: c => runCheat(c), setYaw: v => { camYaw = v; camDragT = 99; }, get scene() { return scene; }, get R3() { return R3; }, get cars() { return cars; }, get peds() { return peds; }, get rockets() { return rockets; }, spawnCopHeli: (x, y) => spawnCopHeli(x, y), isScoped: () => isScoped(), shoot: () => shoot(), SATS, WEAPONS, CARTYPES, setPin: (x, y) => setPin(x, y), get route() { return G.route; }, activeCheats: () => activeCheats(), groundH: (x, y) => groundH(x, y), terrainH: (x, y) => terrainH(x, y), enterCar: c => enterCar(c), floorAt: (x, y, z) => floorAt(x, y, z), roofAt: (x, y) => roofAt(x, y), get look() { return PLOOK; }, get playerMesh() { return playerMesh; }, get Hgrid() { return Hgrid; }, MAPX0, TG, TN };
+window.__NC = { G, player, places, startGame, press: k => { pressed[k] = true; }, hurt: (p, d) => hurtPed(p, d, true, p.x, p.y), get STORY() { return STORY; }, get ISL() { return ISL; }, enterCasino: () => enterCasino(), get table() { return table; }, get inputMode() { return inputMode; }, mouse, get roads() { return roads; }, summit, AIRF, TOWN, makeCar: (...a) => makeCar(...a), cheat: c => runCheat(c), setYaw: v => { camYaw = v; camDragT = 99; }, get scene() { return scene; }, get R3() { return R3; }, get cars() { return cars; }, get peds() { return peds; }, get rockets() { return rockets; }, spawnCopHeli: (x, y) => spawnCopHeli(x, y), isScoped: () => isScoped(), mapToS: (x, y) => mapToS(x, y, mapGeom()), MV, shoot: () => shoot(), SATS, WEAPONS, CARTYPES, setPin: (x, y) => setPin(x, y), get route() { return G.route; }, activeCheats: () => activeCheats(), groundH: (x, y) => groundH(x, y), terrainH: (x, y) => terrainH(x, y), enterCar: c => enterCar(c), floorAt: (x, y, z) => floorAt(x, y, z), roofAt: (x, y) => roofAt(x, y), get look() { return PLOOK; }, get playerMesh() { return playerMesh; }, get Hgrid() { return Hgrid; }, MAPX0, TG, TN };
 
 // version label + updates: the page always asks GitHub for the newest files when online (see sw.js);
 // if a new version arrives while the game is open, the menu offers a one-tap update
-const GAME_VERSION = 'v10.1';
-for (const el of document.querySelectorAll('.ver')) el.textContent = GAME_VERSION + ' · new cities, police helicopters, sniper & rocket launcher';
+const GAME_VERSION = 'v10.2';
+for (const el of document.querySelectorAll('.ver')) el.textContent = GAME_VERSION + ' · zoomable map, new cities, police helicopters, sniper & rocket launcher';
 $('btnUpdate').onclick = () => { save(); location.reload(); };
 if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
   let hadController = !!navigator.serviceWorker.controller;
