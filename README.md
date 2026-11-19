@@ -40,8 +40,8 @@ The game picks the right layout automatically: touch buttons on phones and table
 ## Features
 - Third-person 3D (three.js, bundled locally) with realistic lighting: real-time sun shadows, reflective car paint/glass/water, sunrise-to-night sky, textured streets, glowing streetlights; Graphics High/Low in the pause menu (auto-drops to Low on slow phones); 12×12-block coastal city: downtown towers, neighborhoods, parks, beach
 - Detailed procedurally modeled cars: two Italian-style supercars (mid-engine Vento S, front-engine Vento GT), coupe, sedan, taxi, van, police; spoked wheels with brake calipers, body roll and nose-dive
-- **Realistic people**: sculpted faces (brow, eyes with lids, nose, lips, jaw, ears), natural hairlines and hairstyles (short, buzz, curly, long, ponytail, bun), stubble and beards, muscle-shaped arms and legs, hands with thumbs, sneakers, and printed clothing (palm, hibiscus, floral, stripes, denim). Distant people switch to a lighter model to keep phones fast.
-- **Character creator** (main menu → Character, or Pause → Character): name, man/woman, build, skin tone, hair style and color, facial hair, top, print, colors, bottoms, shoes and accessories, with a face close-up. Your look is saved and used in the story's dialogue.
+- **Realistic people** (v11): photo-textured, fully rigged 3D humans from the Microsoft Rocketbox library (9 men, 7 women, 2 police officers) animated with motion capture: idle breathing, walking and running that blend by speed so the feet don't slide, and a seated pose for cars. Arms aim guns with proper two-handed grips, riders hold the handlebars, gang members wear caps in their crew color. If the models can't load (for example the very first launch offline), the game falls back to the stylized people: sculpted faces (brow, eyes with lids, nose, lips, jaw, ears), natural hairlines and hairstyles (short, buzz, curly, long, ponytail, bun), stubble and beards, muscle-shaped arms and legs, hands with thumbs, sneakers, and printed clothing (palm, hibiscus, floral, stripes, denim). Distant people switch to a lighter model to keep phones fast.
+- **Character creator** (main menu → Character, or Pause → Character): pick **Realistic** and choose one of 16 photo-real people, or **Custom** to build a stylized character (build, skin tone, hair style and color, facial hair, top, print, colors, bottoms, shoes and accessories). Face close-up, name, and your look is saved and used in the story's dialogue.
 - **Zoomable map**: zoom from the whole region down to single streets (streets and buildings stay sharp), drag to move, scale bar; the minimap zooms out when you drive fast or fly.
 - **Map pins with GPS**: open the map, tap anywhere to drop a pin; a purple route follows the roads (dashed line when there's no road, such as to the island), a light beam marks the spot, and the HUD shows distance and direction. The pin clears when you arrive.
 - Traffic AI, pedestrians, parked cars, carjacking, crashes, fires and explosions
@@ -56,7 +56,7 @@ The game picks the right layout automatically: touch buttons on phones and table
 - **Dating**: meet Sofia, Jade, Maya and Luna around the map (pink ♥). Talk (G / TALK), choose what to say, and take them on dates; drive carefully — cops and crashes ruin the mood. At full affection they become your girlfriend and help you once a day.
 - **Boats & island**: speedboats at the pier east of downtown; ride to the island (beaches, palms, umbrellas, Beach Club, villa, its own pier). You can swim, too.
 - **Weather**: random rain showers (wet, reflective streets).
-- Gangs: your green Palms crew and the rival purple Vipers each hold turf. Recruit up to four Palms; they follow you, fight, ride in your car or helicopter and shoot out of the windows. Vipers attack in their turf.
+- Gangs: your Palms crew (green caps) and the rival Vipers (purple caps) each hold turf. Recruit up to four Palms; they follow you, fight, ride in your car or helicopter and shoot out of the windows. Vipers attack in their turf.
 - Flying: helicopter, stunt plane, rocket backpack, automatic parachute when you bail out mid-air; land on rooftops
 - Driving: speed-sensitive steering and extra grip for stable high-speed handling; calmer top speeds and acceleration
 - Jobs from green `$` markers (now including a mountain race): courier, bank job, hit, street race, rideshare
@@ -181,4 +181,6 @@ Type a code on the keyboard at any time, or open **Pause → Cheats**: codes are
 See `AUDIT.md` for the final review.
 
 ## Credits
-Rendering uses [three.js](https://threejs.org) r128 (MIT License, © 2010–2021 three.js authors), bundled as `three.min.js`.
+Rendering uses [three.js](https://threejs.org) r128 (MIT License, © 2010–2021 three.js authors), bundled as `three.min.js`, plus its `GLTFLoader` and `SkeletonUtils` in `lib/` (see `lib/LICENSE`).
+
+The realistic people and their motion-capture animations come from the [Microsoft Rocketbox Avatar Library](https://github.com/microsoft/Microsoft-Rocketbox) (MIT License, © 2020 Microsoft), converted to glTF in `assets/people/`. See `assets/people/LICENSE.md` for the list of avatars and the full license.

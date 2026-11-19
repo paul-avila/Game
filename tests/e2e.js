@@ -183,7 +183,7 @@ const check = (name, cond, info = '') => { results.push([cond ? 'PASS' : 'FAIL',
   check('found a rooftop to walk on', !!roof);
   await p.evaluate(r => { const P = __NC.player; P.x = r.x - 40; P.y = r.y; P.z = r.h; P.vz = 0; P.a = 0; __NC.setYaw(0); }, roof);
   await p.keyboard.down('w'); const legs = new Set();
-  for (let k = 0; k < 6; k++) { await wait(150); legs.add((await E(() => __NC.playerMesh.userData.thighs[0].rotation.z)).toFixed(2)); }
+  for (let k = 0; k < 6; k++) { await wait(150); legs.add((await E(() => { const u = __NC.playerMesh.userData; if (!u.avatar) return u.thighs[0].rotation.z; let b = null; u.inst.traverse(o => { if (o.isBone && /L_Thigh$/.test(o.name)) b = o; }); return b.quaternion.x + b.quaternion.y + b.quaternion.z; })).toFixed(2)); }
   await p.keyboard.up('w');
   check('walking on a rooftop animates (no sliding)', legs.size > 2 && await p.evaluate(r => Math.abs(__NC.player.z - r.h) < 2, roof), [...legs].join(','));
   const terr = await E(() => { const { Hgrid, MAPX0, TG, TN } = __NC; let worst = 0;
@@ -270,6 +270,27 @@ const check = (name, cond, info = '') => { results.push([cond ? 'PASS' : 'FAIL',
   const jumped = await until(() => window.__jz > 6, 8000);
   const landed = await until(() => __NC.player.z < .5, 8000);
   check('Space jumps on foot and lands, without firing', jumped && landed && await E(() => __NC.G.am.pistol === window.__ja), JSON.stringify(await E(() => ({ peak: +window.__jz.toFixed(1) }))));
+  // ---- v11: realistic people (Microsoft Rocketbox avatars with motion capture)
+  const avLoaded = await until(() => __NC.AV.ready || __NC.AV.failed, 40000);
+  check('realistic people load (18 rigged models, 8 motion clips)', avLoaded && await E(() => __NC.AV.ready && Object.keys(__NC.AV.protos).length === 18 && Object.keys(__NC.AV.clips).length === 8), JSON.stringify(await E(() => ({ ready: __NC.AV.ready, failed: __NC.AV.failed, models: Object.keys(__NC.AV.protos).length }))));
+  await wait(800);
+  const avStat = await E(() => { let n = 0; __NC.scene.traverse(o => { if (o.userData && o.userData.avatar) n++; }); const u = __NC.playerMeshObj && __NC.playerMeshObj.userData; return { n, player: !!(u && u.avatar && u.mixer), id: u && u.id, skinned: !!(u && u.inst && (() => { let k = false; u.inst.traverse(o => { if (o.isSkinnedMesh) k = true; }); return k; })()) }; });
+  check('you and the people around you are rigged, skinned avatars', avStat.player && avStat.skinned && avStat.n >= 4, JSON.stringify(avStat));
+  await p.keyboard.down('w');
+  const walkBlend = await until(() => { const u = __NC.playerMeshObj && __NC.playerMeshObj.userData; return !!u && u.avatar && u.w.walk + u.w.run > .6; }, 10000);
+  await p.keyboard.up('w');
+  check('moving blends from the idle into the walk/run motion capture', walkBlend, JSON.stringify(await E(() => { const w = __NC.playerMeshObj.userData.w; return { idle: +w.idle.toFixed(2), walk: +w.walk.toFixed(2), run: +w.run.toFixed(2) }; })));
+  await E(() => { const P = __NC.player; window.__gp = __NC.makeGangPed(P.x + 40, P.y + 20, 'vipers'); });
+  const capped = await until(() => { const m = __NC.pedMesh(window.__gp); return !!m && m.userData.avatar && !!m.userData.cap; }, 8000);
+  check('gang members are avatars wearing caps in their crew color', capped);
+  await E(() => { window.__gp.hp = 0; window.__gp.state = 'dead'; });
+  await E(() => __NC.press('pause')); await wait(500); await p.click('#btnChar2'); await wait(800);
+  await p.click('#ccStyle_custom'); await wait(800);
+  const isCustom = await E(() => !!__NC.playerMeshObj && !__NC.playerMeshObj.userData.avatar);
+  await p.click('#ccStyle_real'); await wait(500); await p.click('button[data-av="m05"]'); await wait(1000);
+  const picked = await E(() => __NC.look.av === 'm05' && !!__NC.playerMeshObj && __NC.playerMeshObj.userData.id === 'm05');
+  await p.click('#ccDone'); await wait(400); await p.click('#btnResume'); await wait(400);
+  check('creator switches Realistic / Custom and picks a person', isCustom && picked && await E(() => __NC.G.state === 'play'), JSON.stringify({ isCustom, picked }));
   // ---- Save / reload persistence
   await E(() => { __NC.G.saveT = 99; }); await wait(1200);
   const before = await E(() => ({ story: __NC.G.storyIdx, cash: Math.floor(__NC.G.cash) }));

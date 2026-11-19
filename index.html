@@ -232,6 +232,8 @@
 </div>
 
 <script src="three.min.js"></script>
+<script src="lib/GLTFLoader.js"></script>
+<script src="lib/SkeletonUtils.js"></script>
 <script>
 (() => {
 'use strict';
@@ -1472,7 +1474,7 @@ const STORY = [
       m.car = makeCar('gt', s.x, s.y, s.a, { col: '#d4af37', persist: true, target: true, hp: 100 });
       Object.assign(m, { type: 'steal', tx: s.x, ty: s.y, text: 'Find the gold Vento GT' });
     } },
-  { intro: [['mama', "The Vipers are selling on our corners. Time they heard from us."], ['mama', "Pick up two of our boys first. Then go to Viper turf and take out six of them."], ['mama', "Vipers wear purple. Their turf is the southeast corner of the city, purple on your map."], ['you', "Six. Got it."]],
+  { intro: [['mama', "The Vipers are selling on our corners. Time they heard from us."], ['mama', "Pick up two of our boys first. Then go to Viper turf and take out six of them."], ['mama', "Vipers wear purple caps. Their turf is the southeast corner of the city, purple on your map."], ['you', "Six. Got it."]],
     outro: [['mama', "Word travels fast. The Palms are back on the street."], ['mama', "And Victor Kane is angry. Good."]], reward: 2000,
     start: m => { Object.assign(m, { type: 'clear', stage: crewCount() >= 2 ? 1 : 0, base: G.stats.vipers, tx: VIPER_HQ.x, ty: VIPER_HQ.y, text: 'Recruit 2 Palms crew members (G or RECRUIT)' }); } },
   { intro: [['benny', "Street racers are betting on who can lap downtown fastest."], ['benny', "Win it in anything with wheels and we split the pot."]],
@@ -1539,7 +1541,7 @@ function updateStoryMission(m, dt, px, py) {
       else {
         const k = G.stats.vipers - m.base; m.huntVipers = true;
         let best = null, bd = 1e9; for (const q of peds) if (q.gang === 'vipers' && q.state !== 'dead') { const d = dist(q.x, q.y, px, py); if (d < bd) { bd = d; best = q; } }
-        if (best && bd < 1600) { m.tx = best.x; m.ty = best.y; m.text = `Shoot Vipers (purple clothes, red arrows): ${Math.min(k, 6)}/6`; }
+        if (best && bd < 1600) { m.tx = best.x; m.ty = best.y; m.text = `Shoot Vipers (purple caps, red arrows): ${Math.min(k, 6)}/6`; }
         else { m.tx = VIPER_HQ.x; m.ty = VIPER_HQ.y; m.text = `Head to Viper turf (purple on the map) and shoot Vipers: ${Math.min(k, 6)}/6`; }
         if (k >= 6) { m.huntVipers = false; missionDone(); }
       }
@@ -1811,6 +1813,7 @@ function stepCasino(dt) {
   G.bigT -= dt; for (const q of G.msgs) q.life -= dt; G.msgs = G.msgs.filter(q => q.life > 0);
 }
 function renderCasino() {
+  if (CAS.npcs) for (const n of CAS.npcs) if (n.mesh && n.mesh.userData.avatar) n.mesh.userData.mixer.update(AV_DT);
   const c = G.cas;
   poseFigure(casinoMe, c.x, c.z, c.a, c.anim, c.moving, false, false, runHeld(), true);
   casinoMe.position.set(c.x, 0, c.z);
@@ -3339,7 +3342,7 @@ function init3D() {
 const lowTwin = new Map();
 function twin(m) {
   let t = lowTwin.get(m);
-  if (!t) { t = new THREE.MeshLambertMaterial({ color: m.color, map: m.map, vertexColors: m.vertexColors, emissive: m.emissive, emissiveMap: m.emissiveMap, emissiveIntensity: m.emissiveIntensity, transparent: m.transparent, opacity: m.opacity, depthWrite: m.depthWrite, side: m.side }); t.userData.std = m; if (m.onBeforeCompile) t.onBeforeCompile = m.onBeforeCompile; lowTwin.set(m, t); }
+  if (!t) { t = new THREE.MeshLambertMaterial({ color: m.color, map: m.map, skinning: !!m.skinning, alphaMap: m.alphaMap || null, alphaTest: m.alphaTest || 0, vertexColors: m.vertexColors, emissive: m.emissive, emissiveMap: m.emissiveMap, emissiveIntensity: m.emissiveIntensity, transparent: m.transparent, opacity: m.opacity, depthWrite: m.depthWrite, side: m.side }); t.userData.std = m; if (m.onBeforeCompile) t.onBeforeCompile = m.onBeforeCompile; lowTwin.set(m, t); }
   return t;
 }
 function applyQual(root) {
@@ -3798,6 +3801,7 @@ function updateAircraftMesh(c, g, dtR) {
   updateSeats(c, inner, u, 0);
 }
 function poseSeated(m, x, seatY, z, aimRel, yOff) {
+  if (m.userData.avatar) return avatarSeated(m, x, seatY, z, aimRel, yOff);
   const u = m.userData;
   m.position.set(x, seatY - 9.5 + yOff, z); m.rotation.set(0, aimRel !== null ? -clamp(aimRel, -1.4, 1.4) : 0, 0);
   u.full.visible = true; u.lod.visible = false; u.sh.visible = false; u.body.rotation.set(0, 0, 0); u.body.position.set(0, 0, 0);
@@ -4140,6 +4144,7 @@ const ik2 = (sx, sy, tx, ty, L1, L2, bendFwd) => { // 2-bone reach in the bike's
   const ex = sx + Math.sin(a1) * L1, ey = sy - Math.cos(a1) * L1; return [a1, Math.atan2(tx - ex, -(ty - ey))];
 };
 function poseRider(m, kind, seatOff, pedal, passenger) {
+  if (m.userData.avatar) return avatarRider(m, kind, seatOff, pedal, passenger);
   const u = m.userData, B = BIKE[kind], c0 = passenger ? .12 : B.lean;
   const hx = B.seat[0] + seatOff, hy = B.seat[1] + (passenger ? .8 : 0) + .3;
   m.position.set(hx, hy - 9.5, 0); m.rotation.set(0, 0, 0);
@@ -4161,10 +4166,10 @@ function poseRider(m, kind, seatOff, pedal, passenger) {
   if (u.gun) u.gun.visible = false;
 }
 function riderHelmet(m, col) {
-  const g = new THREE.Group(), mat = getMat(col, .3, .2);
-  const shell = new THREE.Mesh(new THREE.SphereGeometry(1.32, 16, 12), mat); shell.scale.set(1.1, 1.08, 1.02); shell.position.set(-.05, 17.6, 0); g.add(shell);
-  const visor = new THREE.Mesh(new THREE.SphereGeometry(1.34, 14, 8, -Math.PI * .32, Math.PI * .64, Math.PI * .34, Math.PI * .3), getMat('#111418', .1, .6)); visor.scale.set(1.1, 1.08, 1.02); visor.position.set(-.05, 17.6, 0); g.add(visor);
-  m.userData.full.add(g); return g;
+  const g = new THREE.Group(), mat = getMat(col, .3, .2), av = m.userData.avatar, hy = av ? .25 : 17.6;
+  const shell = new THREE.Mesh(new THREE.SphereGeometry(1.32, 16, 12), mat); shell.scale.set(1.1, 1.08, 1.02); shell.position.set(-.05, hy, 0); g.add(shell);
+  const visor = new THREE.Mesh(new THREE.SphereGeometry(1.34, 14, 8, -Math.PI * .32, Math.PI * .64, Math.PI * .34, Math.PI * .3), getMat('#111418', .1, .6)); visor.scale.set(1.1, 1.08, 1.02); visor.position.set(-.05, hy, 0); g.add(visor);
+  if (av) { m.add(g); m.userData.helmet = g; } else m.userData.full.add(g); return g;
 }
 function updateBikeMesh(c, g, dtR) {
   const u = g.userData, B = BIKE[c.T.bike];
@@ -4654,6 +4659,8 @@ function refreshPlayerModel() {
 }
 function setLook(k, v) {
   PLOOK[k] = v;
+  if (k === 'av') { PLOOK.fem = avFem(v); const nm = PLOOK.name; if (!nm || nm === 'Dex' || nm === 'Dani') PLOOK.name = PLOOK.fem ? 'Dani' : 'Dex'; }
+  if (k === 'fem' && PLOOK.av && avFem(PLOOK.av) !== v) PLOOK.av = v ? 'f05' : 'm12';
   if (k === 'fem') { const nm = PLOOK.name; if (!nm || nm === 'Dex' || nm === 'Dani') PLOOK.name = v ? 'Dani' : 'Dex'; if (v) { PLOOK.facial = 'none'; if (PLOOK.build === 'muscular') PLOOK.build = 'fit'; if (['fade', 'buzz', 'bald'].includes(PLOOK.hairStyle)) PLOOK.hairStyle = 'ponytail'; } else { if (PLOOK.build === 'curvy') PLOOK.build = 'fit'; if (PLOOK.bottom === 'skirt') PLOOK.bottom = 'jeans'; } }
   if (k === 'top' && v === 'longsleeve') PLOOK.sleeve = 'long'; else if (k === 'top') PLOOK.sleeve = 'short';
   refreshPlayerModel(); renderCreator();
@@ -4665,6 +4672,15 @@ function renderCreator() {
   const swatches = k => c => { for (const col of CC_COLORS[k]) { const b = document.createElement('button'); b.className = 'ccSw' + (PLOOK[k] === col ? ' on' : ''); b.style.background = col; b.title = col; b.setAttribute('aria-label', k + ' ' + col); b.onclick = () => setLook(k, col); c.appendChild(b); } };
   const toggle = (k, lab) => c => { const b = document.createElement('button'); b.textContent = lab; b.className = 'ccChip' + (PLOOK[k] ? ' on' : ''); b.onclick = () => setLook(k, !PLOOK[k]); c.appendChild(b); };
   row('Name', c => { const i = document.createElement('input'); i.id = 'ccName'; i.maxLength = 16; i.value = PNAME(); i.oninput = () => { PLOOK.name = i.value.replace(/[^\w .'-]/g, ''); }; c.appendChild(i); });
+  const real = PLOOK.style !== 'custom' && !AV.failed;
+  row('Style', c => { for (const [lab, val] of [['Realistic', 'real'], ['Custom', 'custom']]) { const b = document.createElement('button'); b.textContent = lab; b.id = 'ccStyle_' + val; b.className = 'ccChip' + ((val === 'real') === real ? ' on' : ''); b.onclick = () => { PLOOK.style = val; refreshPlayerModel(); renderCreator(); }; c.appendChild(b); } });
+  if (real) {
+    row('Body', chips('fem', CC_OPTS.fem));
+    const cur = PLOOK.av && avFem(PLOOK.av) === !!PLOOK.fem ? PLOOK.av : PLOOK.fem ? 'f05' : 'm12';
+    row('Person', c => { for (const id of PLOOK.fem ? AV.female : AV.male) { const b = document.createElement('button'); b.textContent = AV.names[id]; b.dataset.av = id; b.className = 'ccChip' + (cur === id ? ' on' : ''); b.onclick = () => setLook('av', id); c.appendChild(b); } });
+    if (!AV.ready) row('', c => { c.textContent = 'Loading realistic models...'; c.style.opacity = .7; c.style.fontSize = '13px'; });
+    return;
+  }
   row('Body', chips('fem', CC_OPTS.fem)); row('Build', chips('build', CC_OPTS.build)); row('Skin', swatches('skin'));
   row('Hair', chips('hairStyle', CC_OPTS.hairStyle)); row('Hair color', swatches('hair'));
   if (!PLOOK.fem) row('Facial hair', chips('facial', CC_OPTS.facial));
@@ -4678,7 +4694,224 @@ function renderCreator() {
   row('Extras', c => { toggle('shades', 'Sunglasses')(c); toggle('watch', 'Watch')(c); toggle('necklace', 'Necklace')(c); toggle('earrings', 'Earrings')(c); });
 }
 
+// ================================================================ realistic people: Microsoft Rocketbox avatars (MIT) with skeletal animation
+const AV = {
+  ready: false, failed: false, loading: false, protos: {}, clips: {}, base: 'assets/people/',
+  male: ['m01', 'm05', 'm06', 'm08', 'm09', 'm11', 'm12', 'm16', 'm17'], female: ['f01', 'f03', 'f05', 'f08', 'f12', 'f17', 'fp2'], cop: ['cop1', 'cop2'],
+  names: { m01: 'Marcus', m05: 'Theo', m06: 'Ray', m08: 'Diego', m09: 'Sam', m11: 'Andre', m12: 'Malik', m16: 'Jonah', m17: 'Kai', f01: 'Emma', f03: 'Nina', f05: 'Rosa', f08: 'Claire', f12: 'Tasha', f17: 'Lena', fp2: 'Gia' },
+  dateAv: { sofia: 'f05', jade: 'f03', maya: 'f17', luna: 'fp2' },
+  walk: { m: 9.9, f: 11.8 }, run: { m: 27.4, f: 27.7 }, sitHip: { m: 5.9, f: 6.1 }, hip: 8.9,
+};
+let AV_DT = 1 / 60;
+const AV_SCALE = 0.1;
+const avFem = id => AV.female.includes(id);
+function loadAvatars() {
+  if (AV.loading || AV.ready) return; AV.loading = true;
+  if (!THREE.GLTFLoader || !THREE.SkeletonUtils) { AV.failed = true; return; }
+  const gl = new THREE.GLTFLoader(), tl = new THREE.TextureLoader();
+  const clipsP = fetch(AV.base + 'anims.json').then(r => r.json()).then(js => {
+    for (const k in js) {
+      const tracks = js[k].t.map(([node, prop, times, vals]) => prop === 'q' ? new THREE.QuaternionKeyframeTrack(node + '.quaternion', times, vals) : new THREE.VectorKeyframeTrack(node + '.position', times, vals));
+      AV.clips[k] = new THREE.AnimationClip(k, js[k].d, tracks);
+    }
+  });
+  const ids = AV.male.concat(AV.female, AV.cop);
+  const one = id => new Promise(res => gl.load(AV.base + id + '.glb', g => {
+    const s = g.scene;
+    s.traverse(o => {
+      if (!o.isMesh) return;
+      o.castShadow = true; o.frustumCulled = false;
+      const m = o.material;
+      m.roughness = .72; m.metalness = 0; m.envMapIntensity = .55; // skin and cloth: soft sky light, no mirror shine
+      if (/opacity/i.test(m.name)) { // hair, lashes and eyebrows: double-sided cards cut out with an alpha mask.
+        // Diffuse only: the physical material's specular blows up on the cards' back faces (bright streaks)
+        const a = tl.load(AV.base + id + '_opacity_a.jpg'); a.flipY = false;
+        o.material = new THREE.MeshLambertMaterial({ name: m.name, map: m.map, alphaMap: a, alphaTest: .45, side: THREE.DoubleSide, skinning: true });
+        o.castShadow = false; o.userData.noShadow = true; // the cards would cast square shadows
+      }
+    });
+    AV.protos[id] = s; res();
+  }, undefined, () => res()));
+  Promise.all([clipsP].concat(ids.map(one))).then(() => {
+    AV.loading = false;
+    if (!Object.keys(AV.protos).length || !AV.clips.m_walk) { AV.failed = true; return; }
+    AV.ready = true; swapPeopleToAvatars();
+  }).catch(() => { AV.loading = false; AV.failed = true; });
+}
+// throw away every procedural person so the next frame rebuilds them as avatars
+function swapPeopleToAvatars() {
+  for (const [, g] of pedMeshes) scene.remove(g); pedMeshes.clear();
+  if (playerMesh) { scene.remove(playerMesh); playerMesh = null; }
+  for (const g of carMeshes.values()) {
+    const u = g.userData;
+    if (u.seats) { for (const [, m] of u.seats) m.parent && m.parent.remove(m); u.seats.clear(); }
+    if (u.riders) { for (const [, m] of u.riders) m.parent && m.parent.remove(m); u.riders.clear(); }
+  }
+  if (!G.inCasino) { casinoScene = null; casinoMe = null; } // rebuilt with avatars on the next visit
+  if (G.state === 'creator') renderCreator();
+}
+function avatarIdFor(p, isPlayer) {
+  if (!AV.ready) return null;
+  if (isPlayer) { if (PLOOK.style === 'custom') return null; const id = PLOOK.av && AV.protos[PLOOK.av] && avFem(PLOOK.av) === !!PLOOK.fem ? PLOOK.av : PLOOK.fem ? 'f05' : 'm12'; return AV.protos[id] ? id : null; }
+  if (p.avId && AV.protos[p.avId]) return p.avId;
+  let id;
+  if (p.date && AV.dateAv[p.date]) id = AV.dateAv[p.date];
+  else if (p.cop) id = pickR(AV.cop);
+  else { const L = pedLook(p, false); id = pickR(L.fem ? AV.female : AV.male); }
+  if (!AV.protos[id]) { const all = Object.keys(AV.protos).filter(k => !AV.cop.includes(k) || p.cop); id = all.length ? pickR(all) : null; }
+  return (p.avId = id);
+}
+function makeAvatarMesh(p, id, isPlayer) {
+  const inst = THREE.SkeletonUtils.clone(AV.protos[id]);
+  inst.scale.setScalar(AV_SCALE); inst.rotation.y = Math.PI / 2; // the Rocketbox rigs face +z; the game's people face +x
+  const g = new THREE.Group(), body = new THREE.Group(); g.add(body); body.add(inst);
+  const sex = avFem(id) ? 'f' : 'm', mixer = new THREE.AnimationMixer(inst), act = {};
+  for (const k of ['idle', 'walk', 'run', 'sit']) { const a = mixer.clipAction(AV.clips[sex + '_' + k]); a.play(); a.setEffectiveWeight(k === 'idle' ? 1 : 0); a.time = Math.random() * a.getClip().duration; act[k] = a; }
+  const B = n => inst.getObjectByName('Bip01_' + n);
+  const bones = { head: B('Head'), neck: B('Neck'), spine: B('Spine1'), rUp: B('R_UpperArm'), rFo: B('R_Forearm'), rHa: B('R_Hand'), lUp: B('L_UpperArm'), lFo: B('L_Forearm'), lHa: B('L_Hand'), rTh: B('R_Thigh'), rCa: B('R_Calf'), rFt: B('R_Foot'), lTh: B('L_Thigh'), lCa: B('L_Calf'), lFt: B('L_Foot') };
+  let gun = null;
+  if (isPlayer || p.cop) { gun = new THREE.Mesh(gunGeo, matGun); gun.visible = false; g.add(gun); }
+  const sh = new THREE.Mesh(new THREE.PlaneGeometry(10, 10).rotateX(-Math.PI / 2), matShadow); sh.position.y = .4; g.add(sh);
+  const dummy = new THREE.Object3D();
+  g.userData = { avatar: true, id, sex, body, full: inst, lod: dummy, inst, mixer, act, bones, gun, sh, w: { idle: 1, walk: 0, run: 0, sit: 0 }, spd: 0, lx: null, ly: null, frame: (Math.random() * 4) | 0, thighs: [], shins: [], uppers: [], fores: [] };
+  if (isPlayer) { // sharper face for your own character
+    new THREE.TextureLoader().load(AV.base + id + '_head_hi.jpg', t => { t.encoding = THREE.sRGBEncoding; t.flipY = false; t.needsUpdate = true; inst.traverse(o => { if (!o.isMesh) return; for (const m of Array.isArray(o.material) ? o.material : [o.material]) if (/head/i.test(m.name) && m.map) { m.map = t; m.needsUpdate = true; } }); });
+  }
+  if (p.gang) gangCap(g, GANGS[p.gang].shirt); // a bright cap in the gang color marks the crew
+  return g;
+}
+function gangCap(g, col) {
+  const cap = new THREE.Group(), mat = getMat(col, .7);
+  const dome = new THREE.Mesh(new THREE.SphereGeometry(1.25, 14, 8, 0, TAU, 0, Math.PI / 2), mat); dome.scale.set(1.12, .78, 1.05); cap.add(dome);
+  const brim = new THREE.Mesh(new THREE.CylinderGeometry(1.15, 1.15, .12, 16, 1, false, -Math.PI / 2, Math.PI), mat); brim.position.set(.9, .02, 0); brim.scale.set(1.1, 1, 1); cap.add(brim);
+  g.add(cap); g.userData.cap = cap;
+}
+// blend idle / walk / run from the real ground speed so the feet don't slide
+function avatarAnimate(u, x, y, moving, run, mode) {
+  const dt = AV_DT;
+  let sp = 0; if (u.lx !== null && dt > 0) sp = Math.min(200, dist(x, y, u.lx, u.ly) / dt); u.lx = x; u.ly = y;
+  u.spd = lerp(u.spd, sp, Math.min(1, dt * 10));
+  const tgt = { idle: 0, walk: 0, run: 0, sit: 0 };
+  if (mode === 'sit') tgt.sit = 1;
+  else if (mode === 'air') tgt.run = 1;
+  else if (!moving || u.spd < 2.5) tgt.idle = 1;
+  else if (run || u.spd > AV.walk[u.sex] * 1.9) tgt.run = 1; else tgt.walk = 1;
+  const k = Math.min(1, dt * 7);
+  for (const n in tgt) { u.w[n] += (tgt[n] - u.w[n]) * k; u.act[n].setEffectiveWeight(u.w[n]); }
+  u.act.walk.setEffectiveTimeScale(clamp(u.spd / AV.walk[u.sex], .6, 2.3));
+  u.act.run.setEffectiveTimeScale(mode === 'air' ? .05 : clamp(u.spd / AV.run[u.sex], .7, 1.5));
+  u.act.idle.setEffectiveTimeScale(1); u.act.sit.setEffectiveTimeScale(1);
+}
+// rotate `bone` so the direction to `child` points along `dir` (world space); works whatever the rig's bone axes are
+const _av1 = new THREE.Vector3(), _av2 = new THREE.Vector3(), _avq1 = new THREE.Quaternion(), _avq2 = new THREE.Quaternion(), _avq3 = new THREE.Quaternion(), _avM = new THREE.Matrix4();
+function pointBone(bone, child, dir) {
+  if (!bone || !child) return;
+  bone.updateMatrixWorld(true);
+  const cur = child.getWorldPosition(_av2).sub(bone.getWorldPosition(_av1)).normalize();
+  _avq1.setFromUnitVectors(cur, dir);
+  bone.getWorldQuaternion(_avq2).premultiply(_avq1);
+  bone.parent.getWorldQuaternion(_avq3).invert();
+  bone.quaternion.copy(_avq3.multiply(_avq2));
+  bone.updateMatrixWorld(true);
+}
+function reachArm(up, fo, ha, target) { // two bones toward a world point (elbow bends naturally down)
+  if (!up || !fo || !ha) return;
+  up.updateMatrixWorld(true);
+  const s = up.getWorldPosition(new THREE.Vector3()), L1 = fo.getWorldPosition(new THREE.Vector3()).distanceTo(s), L2 = ha.getWorldPosition(new THREE.Vector3()).distanceTo(fo.getWorldPosition(new THREE.Vector3()));
+  const to = target.clone().sub(s); let d = to.length(); const m = (L1 + L2) * .995; if (d > m) { to.multiplyScalar(m / d); d = m; }
+  const dirN = to.clone().normalize(), b = Math.acos(clamp((L1 * L1 + d * d - L2 * L2) / (2 * L1 * d), -1, 1));
+  const side = new THREE.Vector3().crossVectors(dirN, new THREE.Vector3(0, -1, 0)); if (side.lengthSq() < 1e-6) side.set(1, 0, 0); side.normalize();
+  const elbowDir = dirN.clone().applyAxisAngle(side, b);
+  pointBone(up, fo, elbowDir);
+  const e = fo.getWorldPosition(new THREE.Vector3()); pointBone(fo, ha, s.add(to).sub(e).normalize());
+}
+function reachLimb(up, mid, end, target, pole) { // two bones toward a world point, the knee/elbow bending toward the pole direction
+  if (!up || !mid || !end) return;
+  up.updateMatrixWorld(true);
+  const s = up.getWorldPosition(new THREE.Vector3()), m0 = mid.getWorldPosition(new THREE.Vector3()), L1 = m0.distanceTo(s), L2 = end.getWorldPosition(new THREE.Vector3()).distanceTo(m0);
+  const to = target.clone().sub(s); let d = to.length(); const mx = (L1 + L2) * .995, mn = Math.abs(L1 - L2) + .01;
+  if (d > mx) { to.multiplyScalar(mx / d); d = mx; } else if (d < mn) { to.multiplyScalar(mn / Math.max(d, 1e-4)); d = mn; }
+  const dirN = to.clone().normalize(), b = Math.acos(clamp((L1 * L1 + d * d - L2 * L2) / (2 * L1 * d), -1, 1));
+  const perp = pole.clone().addScaledVector(dirN, -pole.dot(dirN)); if (perp.lengthSq() < 1e-6) perp.set(0, 1, 0); perp.normalize();
+  pointBone(up, mid, dirN.clone().multiplyScalar(Math.cos(b)).addScaledVector(perp, Math.sin(b)));
+  const e = mid.getWorldPosition(new THREE.Vector3()); pointBone(mid, end, s.add(to).sub(e).normalize());
+}
+// hold the weapon in the right hand, barrel along the forearm
+const _gm = new THREE.Matrix4(), _gx = new THREE.Vector3(), _gy = new THREE.Vector3(), _gz = new THREE.Vector3(), _gUp = new THREE.Vector3(0, 1, 0);
+function placeGun(g, u, show) {
+  if (!u.gun) return; u.gun.visible = !!show; if (!show) return;
+  const fo = u.bones.rFo.getWorldPosition(new THREE.Vector3()), ha = u.bones.rHa.getWorldPosition(new THREE.Vector3());
+  _gy.copy(ha).sub(fo).normalize().negate();
+  _gx.copy(_gUp).addScaledVector(_gy, -_gUp.dot(_gy)); if (_gx.lengthSq() < 1e-6) _gx.set(1, 0, 0); _gx.normalize();
+  _gz.crossVectors(_gx, _gy);
+  _gm.makeBasis(_gx, _gy, _gz); const qW = new THREE.Quaternion().setFromRotationMatrix(_gm);
+  g.updateMatrixWorld(true); const gq = g.getWorldQuaternion(new THREE.Quaternion()).invert();
+  u.gun.quaternion.copy(gq.multiply(qW)); u.gun.position.copy(g.worldToLocal(ha.clone().addScaledVector(_gy, -.6)));
+}
+function placeCap(g, u) {
+  if (!u.cap || !u.bones.head) return;
+  const h = u.bones.head.getWorldPosition(new THREE.Vector3()); h.y += 1.25;
+  u.cap.position.copy(g.worldToLocal(h)); u.cap.rotation.set(0, Math.PI, 0); // worn backwards
+}
+function avatarPose(g, x, y, a, anim, moving, dead, armUp, run, near) {
+  const u = g.userData;
+  g.position.set(x, groundH(x, y), y); g.rotation.y = -a;
+  u.sh.visible = (!QUAL.high || !near) && !dead;
+  if (u.shNear !== near) { // only nearby people cast real-time shadows; far ones get the cheap blob
+    u.shNear = near; if (!u.meshes) { u.meshes = []; u.inst.traverse(o => { if (o.isMesh) u.meshes.push(o); }); }
+    for (const o of u.meshes) o.castShadow = near && !o.userData.noShadow;
+  }
+  if (dead) {
+    u.body.rotation.set(0, 0, lerp(u.body.rotation.z, Math.PI / 2, .2)); u.body.position.set(0, 1.4, 0);
+    if (!u.deadPosed) { u.deadPosed = true; avatarAnimate(u, x, y, false, false); u.mixer.update(.01); }
+    placeGun(g, u, false); if (u.cap) placeCap(g, u); return;
+  }
+  u.deadPosed = false; u.body.rotation.set(0, 0, 0); u.body.position.set(0, 0, 0);
+  avatarAnimate(u, x, y, moving, run, u.mode);
+  u.frame++;
+  if (near || u.frame % 3 === 0) u.mixer.update(near ? AV_DT : AV_DT * 3);
+  if (near && armUp) {
+    const fwd = new THREE.Vector3(Math.cos(a), armUp === 'punch' ? 0 : -.04 - (u.pitch || 0), Math.sin(a)).normalize();
+    pointBone(u.bones.rUp, u.bones.rFo, fwd); pointBone(u.bones.rFo, u.bones.rHa, fwd);
+    if (u.twoHand && armUp !== 'punch') { // support hand under the barrel
+      const hand = u.bones.rHa.getWorldPosition(new THREE.Vector3()).addScaledVector(fwd, 3.2); hand.y -= .4;
+      reachArm(u.bones.lUp, u.bones.lFo, u.bones.lHa, hand);
+    }
+  }
+  placeGun(g, u, near && armUp === true);
+  if (u.cap) placeCap(g, u);
+}
+function avatarSeated(m, x, seatY, z, aimRel, yOff) {
+  const u = m.userData;
+  m.position.set(x - 1.2, seatY - AV.sitHip[u.sex] + yOff, z); m.rotation.set(0, aimRel !== null ? -clamp(aimRel, -1.4, 1.4) : 0, 0);
+  u.body.rotation.set(0, 0, 0); u.body.position.set(0, 0, 0); u.sh.visible = false;
+  avatarAnimate(u, 0, 0, false, false, 'sit'); u.lx = null; u.mixer.update(AV_DT);
+  if (aimRel !== null) { m.updateMatrixWorld(true); const q = m.getWorldQuaternion(new THREE.Quaternion()), fwd = new THREE.Vector3(1, -.05, 0).applyQuaternion(q).normalize(); pointBone(u.bones.rUp, u.bones.rFo, fwd); pointBone(u.bones.rFo, u.bones.rHa, fwd); }
+  placeGun(m, u, aimRel !== null);
+  if (u.cap) placeCap(m, u);
+}
+function avatarRider(m, kind, seatOff, pedal, passenger) {
+  const u = m.userData, B = BIKE[kind];
+  m.position.set(B.seat[0] + seatOff - .6, B.seat[1] + (passenger ? .8 : 0) - AV.sitHip[u.sex] + .3, 0); m.rotation.set(0, 0, 0);
+  u.body.rotation.set(0, 0, passenger ? -.05 : -B.lean * .55); u.body.position.set(0, 0, 0); u.sh.visible = false;
+  avatarAnimate(u, 0, 0, false, false, 'sit'); u.lx = null; u.mixer.update(AV_DT);
+  m.updateMatrixWorld(true);
+  const toW = (lx, ly, lz) => m.parent.localToWorld(new THREE.Vector3(lx, ly, lz));
+  if (passenger) { reachArm(u.bones.rUp, u.bones.rFo, u.bones.rHa, toW(B.seat[0] + seatOff + 4.4, B.seat[1] + 2.4, 1.3)); reachArm(u.bones.lUp, u.bones.lFo, u.bones.lHa, toW(B.seat[0] + seatOff + 4.4, B.seat[1] + 2.4, -1.3)); }
+  else { reachArm(u.bones.rUp, u.bones.rFo, u.bones.rHa, toW(B.bar[0], B.bar[1], 2.6)); reachArm(u.bones.lUp, u.bones.lFo, u.bones.lHa, toW(B.bar[0], B.bar[1], -2.6)); }
+  const knee = new THREE.Vector3(1, .3, 0).transformDirection(m.parent.matrixWorld), wide = kind === 'bicycle' ? 1.5 : 1.9;
+  for (let i = 0; i < 2; i++) { // feet on the pedals (turning with the crank) or the foot pegs; knees forward
+    let fx = B.foot[0], fy = B.foot[1];
+    if (kind === 'bicycle') { const ph = (pedal || 0) + i * Math.PI; fx += Math.cos(ph) * 1.7; fy += Math.sin(ph) * 1.7; }
+    if (passenger) { fx -= 3.5; fy += .6; }
+    const b = u.bones; reachLimb(i ? b.lTh : b.rTh, i ? b.lCa : b.rCa, i ? b.lFt : b.rFt, toW(fx, fy + .8, (i ? -1 : 1) * wide), knee);
+  }
+  if (u.helmet && u.bones.head) u.helmet.position.copy(m.worldToLocal(u.bones.head.getWorldPosition(new THREE.Vector3())));
+  placeGun(m, u, false);
+}
+
 function makePedMesh(p, isPlayer) {
+  { const avId = avatarIdFor(p, isPlayer); if (avId) return makeAvatarMesh(p, avId, isPlayer); }
   const L = pedLook(p, isPlayer), P = pedParts(L);
   const g = new THREE.Group(), body = new THREE.Group(), full = new THREE.Group(); g.add(body); body.add(full);
   const mk = (geo, parent, x, y, z) => { const m = new THREE.Mesh(geo, matPed); m.position.set(x, y, z); m.castShadow = true; parent.add(m); return m; };
@@ -4695,6 +4928,7 @@ function makePedMesh(p, isPlayer) {
   return g;
 }
 function poseFigure(g, x, y, a, anim, moving, dead, armUp, run, near) {
+  if (g.userData.avatar) return avatarPose(g, x, y, a, anim, moving, dead, armUp, run, near);
   const u = g.userData;
   g.position.set(x, groundH(x, y), y); g.rotation.y = -a;
   u.full.visible = near; u.lod.visible = !near;
@@ -4833,14 +5067,18 @@ function render3D(menu) {
   playerMesh.visible = !menu && !player.car && !(G.inCasino && G.state !== 'creator') && !isScoped();
   if (playerMesh.visible) {
     const up = playerMesh.userData, inAir = player.z - floorAt(player.x, player.y, player.z) > 3;
+    if (up.avatar) { up.mode = inAir && !player.para && !player.jet ? 'air' : null; up.twoHand = ['shotgun', 'rifle', 'sniper', 'rpg', 'smg'].includes(WEAPONS[player.weapon].id); up.pitch = inputMode === 'kbm' ? camPitch * .5 : 0; }
     poseFigure(playerMesh, player.x, player.y, player.a, player.anim, player.moving && !inAir, (G.state === 'dead' && G.deathKind === 'WASTED') || player.knockT > 0, player.punchT > 0 ? 'punch' : (player.weapon > 0 && player.aimT > 0) ? true : false, runHeld(), true);
     playerMesh.position.y = (player.z || groundH(player.x, player.y)) - (player.swim ? 13 : 0);
-    if (player.swim) { const sw = Math.sin(G.time * 5); up.uppers.forEach((a, i) => a.rotation.set((i ? -1 : 1) * (.6 + sw * .5), 0, 1.4)); up.fores.forEach(f => f.rotation.set(0, 0, .3)); }
+    if (player.swim) { if (up.avatar) { up.body.rotation.set(0, 0, -1.35); up.body.position.set(-1, 9.5, 0); } else { const sw = Math.sin(G.time * 5); up.uppers.forEach((a, i) => a.rotation.set((i ? -1 : 1) * (.6 + sw * .5), 0, 1.4)); up.fores.forEach(f => f.rotation.set(0, 0, .3)); } }
     up.jet.visible = !!player.jet; up.para.visible = !!player.para;
     if (up.gun) up.gun.geometry = GUN_GEO[WEAPONS[player.weapon].id] || GUN_GEO.pistol;
     if (inAir && !(G.state === 'dead')) {
-      up.thighs[0].rotation.z = .25; up.thighs[1].rotation.z = -.05; up.shins[0].rotation.z = -.35; up.shins[1].rotation.z = -.2;
-      if (player.para) { up.uppers.forEach((a, i) => a.rotation.set((i ? -1 : 1) * .5, 0, .2)); up.fores.forEach(f => f.rotation.set(0, 0, 1.6)); }
+      if (up.avatar) { if (player.para) { const upv = new THREE.Vector3(0, 1, 0); for (const [a, b, c] of [[up.bones.rUp, up.bones.rFo, up.bones.rHa], [up.bones.lUp, up.bones.lFo, up.bones.lHa]]) { pointBone(a, b, upv); pointBone(b, c, upv); } } }
+      else {
+        up.thighs[0].rotation.z = .25; up.thighs[1].rotation.z = -.05; up.shins[0].rotation.z = -.35; up.shins[1].rotation.z = -.2;
+        if (player.para) { up.uppers.forEach((a, i) => a.rotation.set((i ? -1 : 1) * .5, 0, .2)); up.fores.forEach(f => f.rotation.set(0, 0, 1.6)); }
+      }
     }
   }
   syncMap(rocketMeshes, rockets, makeRocketMesh, (r, m) => { m.position.set(r.x, r.z, r.y); m.rotation.set(0, -r.a, Math.atan2(r.vz, Math.hypot(r.vx, r.vy)), 'YXZ'); });
@@ -4910,6 +5148,7 @@ function render3D(menu) {
 
 function render() {
   if (!R3) return;
+  { const n = performance.now(); AV_DT = Math.min(.1, (n - (render.last || n)) / 1000) || 1 / 60; render.last = n; }
   if (G.state === 'menu') menuT += 1 / 60;
   ctx.setTransform(DPR, 0, 0, DPR, 0, 0); ctx.clearRect(0, 0, W, H);
   if (G.inCasino && casinoScene && G.state !== 'creator') { renderCasino(); drawCasinoHUD(); drawTouch(true); return; }
@@ -5194,7 +5433,7 @@ $('btnChar2').onclick = () => { if (player.car || G.inCasino) { msg('Get out of 
 const ccZoom = z => { G.ccZoom = z; $('ccBody').classList.toggle('on', !z); $('ccFace').classList.toggle('on', z); };
 $('ccBody').onclick = () => ccZoom(false); $('ccFace').onclick = () => ccZoom(true);
 $('ccDone').onclick = () => closeCreator();
-$('ccRandom').onclick = () => { const nm = PLOOK.name; Object.assign(PLOOK, randomLook(PLOOK.fem), { name: nm }); refreshPlayerModel(); renderCreator(); };
+$('ccRandom').onclick = () => { const nm = PLOOK.name; if (PLOOK.style !== 'custom' && !AV.failed) { const ids = (PLOOK.fem ? AV.female : AV.male).filter(i => i !== PLOOK.av); PLOOK.av = pickR(ids); refreshPlayerModel(); renderCreator(); return; } Object.assign(PLOOK, randomLook(PLOOK.fem), { name: nm }); refreshPlayerModel(); renderCreator(); };
 $('btnNew').onclick = () => { const b = $('btnNew'); if (b.dataset.armed) { delete b.dataset.armed; b.textContent = 'New game'; startGame(true); } else { b.dataset.armed = '1'; b.textContent = 'Tap again to wipe save'; setTimeout(() => { delete b.dataset.armed; b.textContent = 'New game'; }, 3000); } };
 $('btnResume').onclick = resumeGame;
 $('btnSound').onclick = () => setSound(!AU.on);
@@ -5255,12 +5494,13 @@ buildMinimap();
 resize();
 init3D();
 requestAnimationFrame(frame);
-window.__NC = { G, player, places, startGame, press: k => { pressed[k] = true; }, hurt: (p, d) => hurtPed(p, d, true, p.x, p.y), get STORY() { return STORY; }, get ISL() { return ISL; }, enterCasino: () => enterCasino(), get table() { return table; }, get inputMode() { return inputMode; }, mouse, get roads() { return roads; }, summit, AIRF, TOWN, makeCar: (...a) => makeCar(...a), cheat: c => runCheat(c), setYaw: v => { camYaw = v; camDragT = 99; }, get scene() { return scene; }, get R3() { return R3; }, get cars() { return cars; }, get peds() { return peds; }, get rockets() { return rockets; }, spawnCopHeli: (x, y) => spawnCopHeli(x, y), isScoped: () => isScoped(), mapToS: (x, y) => mapToS(x, y, mapGeom()), MV, drive: (c, thr, steer, hb, dt) => drivePhysics(c, thr, steer, hb, dt), carMesh: c => carMeshes.get(c), get CHEATS() { return CHEATS; }, CHEAT_CATS, shoot: () => shoot(), SATS, WEAPONS, CARTYPES, setPin: (x, y) => setPin(x, y), get route() { return G.route; }, activeCheats: () => activeCheats(), groundH: (x, y) => groundH(x, y), terrainH: (x, y) => terrainH(x, y), enterCar: c => enterCar(c), floorAt: (x, y, z) => floorAt(x, y, z), roofAt: (x, y) => roofAt(x, y), get look() { return PLOOK; }, get playerMesh() { return playerMesh; }, get Hgrid() { return Hgrid; }, MAPX0, TG, TN };
+setTimeout(loadAvatars, 300);
+window.__NC = { G, player, places, startGame, press: k => { pressed[k] = true; }, hurt: (p, d) => hurtPed(p, d, true, p.x, p.y), get STORY() { return STORY; }, get ISL() { return ISL; }, enterCasino: () => enterCasino(), get table() { return table; }, get inputMode() { return inputMode; }, mouse, get roads() { return roads; }, summit, AIRF, TOWN, makeCar: (...a) => makeCar(...a), cheat: c => runCheat(c), setYaw: v => { camYaw = v; camDragT = 99; }, get scene() { return scene; }, get R3() { return R3; }, get cars() { return cars; }, get peds() { return peds; }, get rockets() { return rockets; }, spawnCopHeli: (x, y) => spawnCopHeli(x, y), isScoped: () => isScoped(), mapToS: (x, y) => mapToS(x, y, mapGeom()), MV, drive: (c, thr, steer, hb, dt) => drivePhysics(c, thr, steer, hb, dt), carMesh: c => carMeshes.get(c), AV, get playerMeshObj() { return playerMesh; }, pedMesh: q => pedMeshes.get(q), makeGangPed: (x, y, g) => makeGangPed(x, y, g), get CHEATS() { return CHEATS; }, CHEAT_CATS, shoot: () => shoot(), SATS, WEAPONS, CARTYPES, setPin: (x, y) => setPin(x, y), get route() { return G.route; }, activeCheats: () => activeCheats(), groundH: (x, y) => groundH(x, y), terrainH: (x, y) => terrainH(x, y), enterCar: c => enterCar(c), floorAt: (x, y, z) => floorAt(x, y, z), roofAt: (x, y) => roofAt(x, y), get look() { return PLOOK; }, get playerMesh() { return playerMesh; }, get Hgrid() { return Hgrid; }, MAPX0, TG, TN };
 
 // version label + updates: the page always asks GitHub for the newest files when online (see sw.js);
 // if a new version arrives while the game is open, the menu offers a one-tap update
-const GAME_VERSION = 'v10.8';
-for (const el of document.querySelectorAll('.ver')) el.textContent = GAME_VERSION + ' · bikes, easier driving, zoomable map, new cities, police helicopters';
+const GAME_VERSION = 'v11';
+for (const el of document.querySelectorAll('.ver')) el.textContent = GAME_VERSION + ' · realistic people with motion-capture animation';
 $('btnUpdate').onclick = () => { save(); location.reload(); };
 if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
   let hadController = !!navigator.serviceWorker.controller;

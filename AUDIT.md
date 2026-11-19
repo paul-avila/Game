@@ -96,10 +96,20 @@ Changes: lower top speeds by model (van 90 → Vento S 180 km/h); acceleration t
 - **Front wheels steered backwards** (found while fixing the lean): every car's and bike's front wheels turned away from the corner. The sign is fixed.
 - **Pause menu didn't fit on phones** (found while testing on a phone-sized screen): "PAUSED", Resume and Main menu were cut off in landscape. On short screens the buttons now sit in two columns, and every overlay can scroll.
 
+## v11: realistic people
+
+- **People looked like bricks** (player request): replaced with photo-textured, rigged 3D humans from the open-source Microsoft Rocketbox library (MIT): 9 men, 7 women and 2 police officers, with motion-capture idle, walk, run and sit clips. Walk and run blend by actual ground speed (play rate matched to the clip's stride) so feet don't slide. Guns, two-handed grips, punching, handlebars, seats, helmets, swimming, parachute and death poses are applied on top of the animation by turning the arm bones (aim) or a 2-bone reach (support hand, handlebars). Gang members wear caps in their crew color; the Viper mission text says "purple caps".
+- **Character creator**: Realistic (pick one of 16 people) or Custom (the stylized builder). Old saves default to Realistic.
+- **Fallback**: if the models can't load (e.g. first launch offline), the game keeps the stylized people.
+- **Found while testing**: the body textures were sampled upside down in Chrome (hips showed a hand texture, hands were denim). Cause: GLTFLoader decodes images to ImageBitmaps, which ignore `flipY`; the converter had kept FBX-style UVs. The UVs are now flipped once inside the `.glb` files (glTF convention), so every browser maps them the same way. Checked against the original FBX render and all 18 models.
+- **Found while testing**: on High graphics, hair looked dark with bright streaks. The physical material's specular term blew up on the back faces of the double-sided hair cards (it stayed even with a black base color). Hair now uses a diffuse-only material, which lights both sides correctly, and the cards no longer cast square shadows.
+- **Performance**: only people within ~26 m cast real-time shadows (farther ones use a blob), and far people update their animation every third frame.
+- e2e: models load (18 + 8 clips); you and nearby people are skinned avatars; moving blends into walk/run; gang members wear caps; the creator switches Realistic/Custom and picks a person.
+
 ## Safety and content
 
 - **Trademarks:** no real brands, games or places in code or docs (searched for Ferrari, GTA, Rockstar, Vice City, Los Santos, Lamborghini, Porsche). Cars, characters, the city, gangs and the casino are original.
-- **No network access** besides loading three.js (local copy in the repo; pinned cdnjs r128 in the hosted link). No `fetch`, XHR, WebSocket, `eval` or `new Function`.
+- **No outside network access** besides loading three.js (local copy in the repo; pinned cdnjs r128 in the hosted link). The only `fetch`/loader requests are for the game's own files (`assets/people/`), same origin. No XHR to other sites, WebSocket, `eval` or `new Function`.
 - **HTML injection:** `innerHTML` is only used with the game's own constant strings (card faces, slot symbols) or to clear containers. Player-typed cheat codes are filtered to A–Z and never inserted as HTML; dialogue, the cheat list and the character name use `textContent` (the name is also filtered to letters, digits, spaces and . ' -).
 - **Storage:** four `localStorage` keys (`neoncoast.v1` save, `neoncoast.gfx`, `neoncoast.sens`, `neoncoast.look`), all wrapped in try/catch; the game runs normally with storage blocked.
 - **Gambling:** in-game currency only; the table screen says so. There's no way to buy currency.

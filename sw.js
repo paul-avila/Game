@@ -1,6 +1,7 @@
 // Offline cache for Neon Coast. Bump VERSION when files change.
-const VERSION = 'neoncoast-v10.8';
-const FILES = ['./', './index.html', './manifest.webmanifest', './icon.svg', './icon-192.png', './icon-512.png', './three.min.js'];
+const VERSION = 'neoncoast-v11';
+const FILES = ['./', './index.html', './manifest.webmanifest', './icon.svg', './icon-192.png', './icon-512.png', './three.min.js', './lib/GLTFLoader.js', './lib/SkeletonUtils.js', './assets/people/anims.json'];
+// the people models (assets/people/*.glb and textures) are cached the first time they load
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(VERSION).then(c => c.addAll(FILES.map(f => new Request(f, { cache: 'reload' })))).then(() => self.skipWaiting()));
 });
