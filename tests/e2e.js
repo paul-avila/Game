@@ -259,6 +259,11 @@ const check = (name, cond, info = '') => { results.push([cond ? 'PASS' : 'FAIL',
   await p.keyboard.up('d'); await p.keyboard.up('w');
   check('bikes lean into the turn', leanOk, JSON.stringify(await E(() => { const c = window.__lb, m = __NC.carMesh(c); return { steer: +(c.steerS || 0).toFixed(2), lean: m && +m.userData.leanV.toFixed(2) }; })));
   await E(() => { const c = __NC.player.car; if (c) { c.vx = c.vy = 0; } }); await p.keyboard.press('f'); await wait(300);
+  // ---- v10.7: Esc returns to the game from pause and the cheats panel (applying a typed code)
+  await E(() => __NC.press('pause')); await wait(500); await p.click('#btnCheats'); await wait(300);
+  const cashEsc = await E(() => __NC.G.cash);
+  await p.fill('#cheatInput', 'payday'); await p.focus('#cheatInput'); await p.keyboard.press('Escape'); await wait(400);
+  check('Esc in the cheats panel applies the typed code and resumes', await p.evaluate(c0 => __NC.G.state === 'play' && __NC.G.cash >= c0 + 250000 && document.getElementById('cheats').classList.contains('hidden'), cashEsc));
   // ---- Save / reload persistence
   await E(() => { __NC.G.saveT = 99; }); await wait(1200);
   const before = await E(() => ({ story: __NC.G.storyIdx, cash: Math.floor(__NC.G.cash) }));

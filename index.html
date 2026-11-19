@@ -50,6 +50,7 @@
     #cheats .cheatTitle{font-size:17px!important}
     #cheats input,#cheatGo{padding:6px 10px;font-size:15px}
     #cheatMsg{min-height:0!important;font-size:13px}
+    .cheatHint{display:none}
     #cheatsOff{padding:6px 12px;font-size:14px}
     #cheatTabs{flex-wrap:nowrap;overflow-x:auto;padding-bottom:4px;-webkit-overflow-scrolling:touch}
     #cheatTabs .ccChip{flex:0 0 auto}
@@ -189,6 +190,7 @@
     <div class="cheatTitle" style="font-size:24px;font-weight:800">CHEATS</div>
     <div class="row" style="flex-wrap:nowrap"><input id="cheatInput" placeholder="Type a code or search" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false"><button id="cheatGo" style="min-width:0">OK</button></div>
     <div id="cheatMsg" style="min-height:20px;color:#ffe066;font-weight:700"></div>
+    <div class="cheatHint" style="font-size:12px;opacity:.65;margin-top:-6px">Enter applies a typed code · Esc goes straight back to the game</div>
     <div id="cheatActive" class="ccOpts" style="font-size:13px"></div>
     <button id="cheatsOff" class="dim">Turn off all cheats</button>
     <div id="cheatTabs" class="ccOpts"></div>
@@ -2058,7 +2060,22 @@ function endPtr(e) {
   for (const k in btn) if (btn[k].id === e.pointerId) { btn[k].down = false; btn[k].id = null; }
 }
 cv.addEventListener('pointerup', endPtr); cv.addEventListener('pointercancel', endPtr); cv.addEventListener('pointerleave', endPtr);
+// Esc always takes you back to the game from the pause menu and its panels (also while typing a cheat)
+function escBack() {
+  if (G.state === 'paused') {
+    if (!$('cheats').classList.contains('hidden')) {
+      const v = $('cheatInput').value.trim().toUpperCase();
+      if (v && CHEATS.some(c => c[0] === v)) runCheat(v); // a complete code typed but not sent: apply it on the way out
+      $('cheatInput').value = ''; $('cheatInput').blur(); $('cheats').classList.add('hidden');
+    }
+    resumeGame(); return true;
+  }
+  if (G.state === 'creator') { $('ccName') && $('ccName').blur(); closeCreator(); if (G.state === 'paused') resumeGame(); return true; }
+  if (G.state === 'shop') { closeShop(); return true; }
+  return false;
+}
 window.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && escBack()) { e.preventDefault(); return; }
   if (e.target && e.target.tagName === 'INPUT') return;
   initAudio();
   const k = e.key.toLowerCase();
@@ -5236,7 +5253,7 @@ window.__NC = { G, player, places, startGame, press: k => { pressed[k] = true; }
 
 // version label + updates: the page always asks GitHub for the newest files when online (see sw.js);
 // if a new version arrives while the game is open, the menu offers a one-tap update
-const GAME_VERSION = 'v10.6';
+const GAME_VERSION = 'v10.7';
 for (const el of document.querySelectorAll('.ver')) el.textContent = GAME_VERSION + ' · bikes, easier driving, zoomable map, new cities, police helicopters';
 $('btnUpdate').onclick = () => { save(); location.reload(); };
 if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {

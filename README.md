@@ -33,7 +33,7 @@ The game picks the right layout automatically: touch buttons on phones and table
 | Zoom / move the big map | Mouse wheel (or trackpad pinch), + / − keys or buttons, drag; arrow keys move; ◎ centers on you | Pinch with two fingers, + / − buttons, drag with one finger; ◎ centers on you |
 | Drop / remove a map pin | Open the map, click a spot (click the pin again to remove it) | Open the map, tap a spot |
 | Close the map | Tab, Esc, ✕ or click outside the map | ✕ or tap outside the map |
-| Pause | Esc | II |
+| Pause / back to the game | Esc (also closes Cheats, Controls, Character and shops; a code typed in Cheats is applied) | II / Resume |
 | Cheats | Type a code any time | Pause → Cheats |
 
 ## Features

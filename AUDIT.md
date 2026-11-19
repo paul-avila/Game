@@ -10,7 +10,7 @@ Scope: everything in this repository (`index.html` game, `sw.js` offline cache, 
 | Casino rules | `tests/casino-rules.test.js` (106 assertions) | **All pass** |
 | Baccarat odds | 2,000,000 simulated 8-deck hands vs published odds | Banker 45.83% / Player 44.66% / Tie 9.52% (published 45.86 / 44.62 / 9.52); house edge Banker 1.12%, Player 1.17% (published 1.06 / 1.24, within simulation noise) |
 | Slots payback | Exact calculation from reel weights | 91.75% |
-| Full playthrough | `tests/e2e.js` (headless Chromium, laptop layout) | **88/88 pass** (after v10.6) |
+| Full playthrough | `tests/e2e.js` (headless Chromium, laptop layout) | **89/89 pass** (after v10.7) |
 | Phone layout | Playwright Pixel 7 emulation | touch buttons, joystick, TALK/PLAY context button, dialogue taps |
 | Content and safety | Source search | see "Safety and content" below |
 
