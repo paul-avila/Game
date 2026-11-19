@@ -1422,7 +1422,7 @@ const STORY = [
       m.car = makeCar('gt', s.x, s.y, s.a, { col: '#d4af37', persist: true, target: true, hp: 100 });
       Object.assign(m, { type: 'steal', tx: s.x, ty: s.y, text: 'Find the gold Vento GT' });
     } },
-  { intro: [['mama', "The Vipers are selling on our corners. Time they heard from us."], ['mama', "Pick up two of our boys first. Then go to Viper turf and take out six of them."], ['you', "Six. Got it."]],
+  { intro: [['mama', "The Vipers are selling on our corners. Time they heard from us."], ['mama', "Pick up two of our boys first. Then go to Viper turf and take out six of them."], ['mama', "Vipers wear purple. Their turf is the southeast corner of the city, purple on your map."], ['you', "Six. Got it."]],
     outro: [['mama', "Word travels fast. The Palms are back on the street."], ['mama', "And Victor Kane is angry. Good."]], reward: 2000,
     start: m => { Object.assign(m, { type: 'clear', stage: crewCount() >= 2 ? 1 : 0, base: G.stats.vipers, tx: VIPER_HQ.x, ty: VIPER_HQ.y, text: 'Recruit 2 Palms crew members (G or RECRUIT)' }); } },
   { intro: [['benny', "Street racers are betting on who can lap downtown fastest."], ['benny', "Win it in anything with wheels and we split the pot."]],
@@ -1485,8 +1485,14 @@ function updateStoryMission(m, dt, px, py) {
       if (m.stage === 1 && near(50) && Math.hypot(m.car.vx, m.car.vy) < 90) { if (m.car.hp < m.car.T.hp * .45) missionFail("Benny: That's scrap, not a car."); else { m.car.target = false; missionDone(); } }
       break;
     case 'clear':
-      if (m.stage === 0) { m.text = `Recruit 2 Palms crew members (${crewCount()}/2)`; m.tx = places.home.x; m.ty = places.home.y + 120; if (crewCount() >= 2) { m.stage = 1; msg('Now hit Viper turf!', 2); } }
-      else { const k = G.stats.vipers - m.base; m.tx = VIPER_HQ.x; m.ty = VIPER_HQ.y; m.text = `Take out Vipers in their turf (${Math.min(k, 6)}/6)`; if (k >= 6) missionDone(); }
+      if (m.stage === 0) { m.text = `Recruit 2 Palms crew members (${crewCount()}/2)`; m.tx = places.home.x; m.ty = places.home.y + 120; if (crewCount() >= 2) { m.stage = 1; msg('Now find the Vipers: they wear PURPLE. Follow the red arrows and shoot them.', 5); } }
+      else {
+        const k = G.stats.vipers - m.base; m.huntVipers = true;
+        let best = null, bd = 1e9; for (const q of peds) if (q.gang === 'vipers' && q.state !== 'dead') { const d = dist(q.x, q.y, px, py); if (d < bd) { bd = d; best = q; } }
+        if (best && bd < 1600) { m.tx = best.x; m.ty = best.y; m.text = `Shoot Vipers (purple clothes, red arrows): ${Math.min(k, 6)}/6`; }
+        else { m.tx = VIPER_HQ.x; m.ty = VIPER_HQ.y; m.text = `Head to Viper turf (purple on the map) and shoot Vipers: ${Math.min(k, 6)}/6`; }
+        if (k >= 6) { m.huntVipers = false; missionDone(); }
+      }
       break;
     case 'casino':
       m.text = 'Enter the Neon Palace and win a hand of baccarat';
@@ -2426,6 +2432,14 @@ function populate(dt) {
   });
   if (Math.random() < dt * .2) spawnDates();
   peds = peds.filter(p => ((p.follow || p.date || p.persistBoss) && p.state !== 'dead') || (dist(p.x, p.y, px, py) < 1500 && !(p.state === 'dead' && p.deadT <= 0)));
+  if (G.mission && G.mission.huntVipers) { // enough Vipers to find during the turf mission
+    const near = peds.filter(q => q.gang === 'vipers' && q.state !== 'dead' && dist(q.x, q.y, px, py) < 1100).length;
+    if (near < 5 && Math.random() < .25) {
+      const inTurf = turfOf(blockAt(px, py)) === 'vipers' || dist(px, py, VIPER_HQ.x, VIPER_HQ.y) < 1400;
+      const cand = blocks.filter(b => { if (turfOf(b) !== 'vipers') return false; const d = dist((b.x0 + b.x1) / 2, (b.y0 + b.y1) / 2, inTurf ? px : VIPER_HQ.x, inTurf ? py : VIPER_HQ.y); return d > (inTurf ? 220 : 0) && d < 800; });
+      if (cand.length) { const sp2 = sidewalkOn(pickR(cand)); makeGangPed(sp2.x, sp2.y, 'vipers'); }
+    }
+  }
   if (nearCity && !G.cheat.empty) for (const gname of ['palms', 'vipers']) {
     if (peds.filter(q => q.gang === gname && !q.follow && q.state !== 'dead').length >= 7 || Math.random() > .1) continue;
     const cand = blocks.filter(b => turfOf(b) === gname && dist((b.x0 + b.x1) / 2, (b.y0 + b.y1) / 2, px, py) < 1300 && dist((b.x0 + b.x1) / 2, (b.y0 + b.y1) / 2, px, py) > 300);
@@ -3767,6 +3781,7 @@ function buildMarkers() {
   MK.mission = makeMarker('#ffe066', 24); MK.next = makeMarker('#ffffff', 30);
   MK.arrow = makeArrow('#ffe066'); MK.jobArrows = places.jobs.map(() => makeArrow('#2ee87a'));
   MK.story = makeMarker('#ffd23f', 20); MK.storyArrow = makeArrow('#ffd23f'); MK.storyArrow.scale.set(1.5, 1.5, 1.5);
+  MK.enemyArrows = Array.from({ length: 8 }, () => { const a = makeArrow('#ff3b3b'); a.scale.set(.8, .8, .8); return a; });
   MK.dateDest = makeMarker('#ff7ad9', 26); MK.dateArrows = DATES.map(() => makeArrow('#ff7ad9'));
   MK.pin = makeMarker('#c86bff', 30); MK.pinArrow = makeArrow('#c86bff'); MK.pinArrow.scale.set(1.7, 1.7, 1.7);
   { const beam = new THREE.Mesh(new THREE.CylinderGeometry(5, 5, 1600, 10, 1, true), new THREE.MeshBasicMaterial({ color: lin('#c86bff'), transparent: true, opacity: .3, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide })); beam.position.y = 800; MK.pin.add(beam); }
@@ -4680,7 +4695,9 @@ function render3D(menu) {
   MK.pin.visible = MK.pinArrow.visible = !menu && !!G.pin;
   if (G.pin) { const q = G.pin; MK.pin.position.set(q.x, q.h, q.y); MK.pin.scale.set(pulse, 1, pulse); MK.pinArrow.position.set(q.x, q.h + 70 + Math.sin(G.time * 3) * 5, q.y); MK.pinArrow.rotation.y = G.time * 2; }
   MK.mission.visible = MK.next.visible = MK.arrow.visible = false;
-  if (m && !menu) {
+  { let n = 0; if (m && m.huntVipers && !menu) for (const q of peds) { if (n >= MK.enemyArrows.length) break; if (q.gang !== 'vipers' || q.state === 'dead' || dist(q.x, q.y, cam.x, cam.y) > 1300) continue; const a = MK.enemyArrows[n++]; a.visible = true; a.position.set(q.x, groundH(q.x, q.y) + 27 + Math.sin(G.time * 4 + q.x) * 2, q.y); a.rotation.y = G.time * 3; }
+    for (; n < MK.enemyArrows.length; n++) MK.enemyArrows[n].visible = false; }
+  if (m && !menu && !m.huntVipers) {
     MK.arrow.visible = true; MK.arrow.material.color.copy(lin(m.type === 'hit' ? '#ff3b3b' : '#ffe066'));
     MK.arrow.position.set(m.tx, groundH(m.tx, m.ty) + (m.type === 'hit' ? 42 : 55) + Math.sin(G.time * 3) * 4, m.ty); MK.arrow.rotation.y = G.time * 2;
     if (m.type !== 'hit') {
@@ -4731,7 +4748,8 @@ function drawBigMap() {
   for (const D of DATES) { const q = datePed(D.id); if (q && !q.dateFollow) dot(q.x, q.y, '#ff7ad9', 4, '♥ ' + D.name); } dot(AIRF.x, AIRF.y, '#9ecbff', 5, 'Airfield'); for (const C of SATS) dot(C.x, C.y, '#ffd27a', 6, C.name.toLowerCase().replace(/\b\w/g, ch => ch.toUpperCase())); dot(TOWN.x, TOWN.y, '#ffd27a', 5, 'Pine Hollow');
   for (const f of followers()) dot(f.x, f.y, '#2ee87a', 3);
   for (const c of cars) if (c.siren && !c.dead) dot(c.x, c.y, '#3060ff', 3.5);
-  if (G.mission) dot(G.mission.tx, G.mission.ty, '#ffe066', 7, 'Job');
+  if (G.mission && G.mission.huntVipers) { for (const q of peds) if (q.gang === 'vipers' && q.state !== 'dead') dot(q.x, q.y, '#ff3b3b', 3.5); dot(VIPER_HQ.x, VIPER_HQ.y, '#b07bff', 6, 'Viper turf'); }
+  else if (G.mission) dot(G.mission.tx, G.mission.ty, '#ffe066', 7, 'Job');
   const px = player.car ? player.car.x : player.x, py = player.car ? player.car.y : player.y, [a, b] = toS(px, py);
   ctx.save(); ctx.translate(a, b); ctx.rotate(player.car ? player.car.a : player.a);
   ctx.fillStyle = '#fff'; ctx.strokeStyle = '#000'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(10, 0); ctx.lineTo(-7, -7); ctx.lineTo(-3, 0); ctx.lineTo(-7, 7); ctx.closePath(); ctx.fill(); ctx.stroke(); ctx.restore();
@@ -4788,7 +4806,8 @@ function drawHUD() {
   for (const D of DATES) { const q = datePed(D.id); if (q && !q.dateFollow) blip(q.x, q.y, '#ff7ad9', 3); }
   if (G.date) blip(G.date.dest.x, G.date.dest.y, '#ff7ad9', 5, true);
   for (const c of cars) if (c.siren && !c.dead) blip(c.x, c.y, (G.time * 4 % 2 < 1) ? '#ff3030' : '#3060ff', 3);
-  if (G.mission) blip(G.mission.tx, G.mission.ty, G.mission.type === 'hit' ? '#ff3b3b' : '#ffe066', 5, true);
+  if (G.mission && G.mission.huntVipers) { for (const q of peds) if (q.gang === 'vipers' && q.state !== 'dead') blip(q.x, q.y, '#ff3b3b', 3.5, false); blip(G.mission.tx, G.mission.ty, '#ff3b3b', 4.5, true); }
+  else if (G.mission) blip(G.mission.tx, G.mission.ty, G.mission.type === 'hit' ? '#ff3b3b' : '#ffe066', 5, true);
   if (G.pin) {
     if (G.route) { ctx.beginPath(); G.route.pts.forEach((q, i) => { const a = (q.x - cam.x) * s, b = (q.y - cam.y) * s; if (i) ctx.lineTo(a, b); else ctx.moveTo(a, b); }); ctx.strokeStyle = 'rgba(0,0,0,.55)'; ctx.lineWidth = 6; ctx.lineJoin = ctx.lineCap = 'round'; ctx.setLineDash(G.route.road ? [] : [6, 5]); ctx.stroke(); ctx.strokeStyle = '#c86bff'; ctx.lineWidth = 3.5; ctx.stroke(); ctx.setLineDash([]); }
     blip(G.pin.x, G.pin.y, '#c86bff', 5.5, true);
@@ -4843,7 +4862,7 @@ function drawHUD() {
     // direction arrow relative to camera
     const rel = Math.atan2(m.ty - cam.y, m.tx - cam.x) - camYaw;
     ctx.save(); ctx.translate(W / 2, H - 58); ctx.rotate(rel);
-    ctx.fillStyle = m.type === 'hit' ? '#ff3b3b' : '#ffe066'; ctx.strokeStyle = '#000'; ctx.lineWidth = 2;
+    ctx.fillStyle = m.type === 'hit' || m.huntVipers ? '#ff3b3b' : '#ffe066'; ctx.strokeStyle = '#000'; ctx.lineWidth = 2;
     ctx.beginPath(); ctx.moveTo(0, -14); ctx.lineTo(10, 8); ctx.lineTo(0, 3); ctx.lineTo(-10, 8); ctx.closePath(); ctx.fill(); ctx.stroke();
     ctx.restore();
     hudText(Math.round(dist(cam.x, cam.y, m.tx, m.ty) / 10) + 'm', W / 2 + 26, H - 58, 12, '#fff', 'left');
@@ -5015,7 +5034,7 @@ window.__NC = { G, player, places, startGame, press: k => { pressed[k] = true; }
 
 // version label + updates: the page always asks GitHub for the newest files when online (see sw.js);
 // if a new version arrives while the game is open, the menu offers a one-tap update
-const GAME_VERSION = 'v10.3';
+const GAME_VERSION = 'v10.4';
 for (const el of document.querySelectorAll('.ver')) el.textContent = GAME_VERSION + ' · easier driving, zoomable map, new cities, police helicopters';
 $('btnUpdate').onclick = () => { save(); location.reload(); };
 if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
