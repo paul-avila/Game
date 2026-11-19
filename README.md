@@ -21,19 +21,24 @@ The game picks the right layout automatically: touch buttons on phones and table
 | Sprint | Shift | RUN |
 | Handbrake | Space or Shift | BRAKE |
 | Enter / exit vehicle | F or E | CAR |
+| Take off the rocket pack | F or E (away from vehicles; mid-air opens a parachute) | PACK OFF |
 | Switch weapon | Q or mouse wheel | ⇄ |
 | Fly up / down | Space / C | UP / DOWN |
 | Recruit crew · talk to people | G | RECRUIT / TALK |
 | Play a casino table | F | PLAY |
 | Next line of dialogue | Click, Space or Enter | Tap |
 | Map | Tab | Tap minimap |
+| Drop / remove a map pin | Open the map, click a spot (click the pin again to remove it) | Open the map, tap a spot |
+| Close the map | Tab, Esc, ✕ or click outside the map | ✕ or tap outside the map |
 | Pause | Esc | II |
 | Cheats | Type a code any time | Pause → Cheats |
 
 ## Features
 - Third-person 3D (three.js, bundled locally) with realistic lighting: real-time sun shadows, reflective car paint/glass/water, sunrise-to-night sky, textured streets, glowing streetlights; Graphics High/Low in the pause menu (auto-drops to Low on slow phones); 12×12-block coastal city: downtown towers, neighborhoods, parks, beach
 - Detailed procedurally modeled cars: two Italian-style supercars (mid-engine Vento S, front-engine Vento GT), coupe, sedan, taxi, van, police; spoked wheels with brake calipers, body roll and nose-dive
-- Realistic-proportion people with faces, hairstyles, varied clothing and jointed walk/run animation
+- **Realistic people**: sculpted faces (brow, eyes with lids, nose, lips, jaw, ears), natural hairlines and hairstyles (short, buzz, curly, long, ponytail, bun), stubble and beards, muscle-shaped arms and legs, hands with thumbs, sneakers, and printed clothing (palm, hibiscus, floral, stripes, denim). Distant people switch to a lighter model to keep phones fast.
+- **Character creator** (main menu → Character, or Pause → Character): name, man/woman, build, skin tone, hair style and color, facial hair, top, print, colors, bottoms, shoes and accessories, with a face close-up. Your look is saved and used in the story's dialogue.
+- **Map pins with GPS**: open the map, tap anywhere to drop a pin; a purple route follows the roads (dashed line when there's no road, such as to the island), a light beam marks the spot, and the HUD shows distance and direction. The pin clears when you arrive.
 - Traffic AI, pedestrians, parked cars, carjacking, crashes, fires and explosions
 - 5-star wanted system: patrols, pursuits, foot cops, busted / wasted, Respray garage
 - Huge world: 14×14-block city, desert, the town of Pine Hollow, an airfield with runway, hangars, a parked plane and helicopters, and mountain countryside: ridged peaks with rock and snow, pine forests, coastline, a winding mountain highway with guard rails, a radio tower on the summit, off-road driving with slope physics
@@ -50,6 +55,8 @@ The game picks the right layout automatically: touch buttons on phones and table
 
 ## Cheats
 Type a code on the keyboard at any time, or open **Pause → Cheats** to type or tap one.
+
+**Undoing cheats:** toggle cheats switch off when you enter the same code again. **Pause → Cheats** lists every cheat that is on: tap one to switch it off, or tap **Turn off all cheats** (or type **NOCHEATS**). The HUD shows "CHEATS ON" under the minimap while any toggle is active. One-off cheats (money, teleports, vehicles, time) have nothing to switch off.
 
 | Code | Effect |
 |---|---|
@@ -69,7 +76,7 @@ Type a code on the keyboard at any time, or open **Pause → Cheats** to type or
 | EMPTYSTREETS / RUSHHOUR | No traffic / heavy traffic (toggle) |
 | MIDNIGHT / HIGHNOON / GOLDENHOUR | Set the time of day |
 | SUMMIT / HOMEBASE | Teleport to the mountain top / safehouse |
-| SKYPACK | Rocket backpack (toggle) |
+| SKYPACK | Rocket backpack (toggle; F / PACK OFF also takes it off) |
 | CHOPPER | Spawn a helicopter |
 | JETSTREAM | Fly a stunt plane (starts in the air) |
 | CREWUP | Three Palms gang members join you |
@@ -79,7 +86,8 @@ Type a code on the keyboard at any time, or open **Pause → Cheats** to type or
 | PARADISE / HIGHROLLER | Teleport to the island / the Neon Palace |
 | LUCKYSTREAK | Win your next 3 casino rounds |
 | CHARMER | Everyone you date adores you |
-| STORMY / SUNSHINE | Rain / clear skies |
+| STORMY / SUNSHINE | Rainstorm (toggle) / clear skies |
+| NOCHEATS | Turn off every cheat that is on |
 | PINKRIDE | Spawn a pink Vento S |
 | TIMEWARP | Skip ahead 6 hours |
 | STORYSKIP | Complete the current story mission |

@@ -142,7 +142,54 @@ const check = (name, cond, info = '') => { results.push([cond ? 'PASS' : 'FAIL',
   for (const code of ['GOLDRUSH', 'STORMY', 'SUNSHINE', 'PINKRIDE', 'TIMEWARP', 'PARADISE', 'SPEEDBOAT', 'HIGHROLLER', 'SKYPACK', 'SKYPACK', 'CHOPPER']) {
     const r = await p.evaluate(c => __NC.cheat(c), code); check('cheat ' + code, !!r, r); await wait(150);
   }
-  // ---- Save / reload persistence
+  // ---- Rocket pack comes off (F), mid-air it opens a parachute
+  await E(() => { __NC.cheat('HOMEBASE'); if (!__NC.player.jet) __NC.cheat('SKYPACK'); const P = __NC.player; P.x += 300; P.z = __NC.groundH(P.x, P.y); });
+  await wait(300); await p.keyboard.press('f'); await wait(600);
+  check('F takes the rocket pack off', await E(() => !__NC.player.jet));
+  await E(() => { __NC.cheat('SKYPACK'); __NC.player.z = 450; }); await wait(300); await p.keyboard.press('f'); await wait(600);
+  check('pack off mid-air opens a parachute', await E(() => !__NC.player.jet && __NC.player.para));
+  await until(() => !__NC.player.para, 20000);
+  // ---- Undo cheats
+  await E(() => { __NC.cheat('IRONSKIN'); __NC.cheat('NITROUS'); __NC.cheat('STORMY'); });
+  const act = await E(() => __NC.activeCheats());
+  check('active cheats are listed', ['IRONSKIN', 'NITROUS', 'STORMY'].every(k => act.includes(k)), JSON.stringify(act));
+  check('same code switches a cheat off', await E(() => { __NC.cheat('NITROUS'); return !__NC.activeCheats().includes('NITROUS'); }));
+  const nc = await E(() => __NC.cheat('NOCHEATS'));
+  check('NOCHEATS turns everything off', (await E(() => __NC.activeCheats())).length === 0, nc);
+  // ---- Map pin + GPS route
+  await E(() => { __NC.cheat('HOMEBASE'); }); await wait(300);
+  await p.keyboard.press('Tab'); await wait(300);
+  const mp = await E(() => { const [a, b] = __NC.G.bigMapT.toS(5200, 900); return { a, b }; });
+  await p.mouse.click(mp.a, mp.b); await wait(300);
+  const pin = await E(() => ({ pin: __NC.G.pin, road: __NC.route && __NC.route.road, n: __NC.route && __NC.route.pts.length }));
+  check('clicking the map drops a pin with a road route', !!pin.pin && pin.road && pin.n > 3, JSON.stringify({ n: pin.n }));
+  await p.mouse.click(4, 700); await wait(200);
+  check('clicking outside closes the map', await E(() => !__NC.G.bigMap));
+  await E(() => { const P = __NC.player; P.x = 5200 - 60; P.y = 900; }); 
+  check('pin clears on arrival', await until(() => !__NC.G.pin, 6000));
+  // ---- Rooftop walking animates; ground matches rendered terrain
+  const roof = await E(() => { for (let x = 300; x < 6000; x += 37) for (let y = 300; y < 6000; y += 41) { const h = __NC.roofAt(x, y); if (h > 60 && __NC.roofAt(x + 50, y) === h && __NC.roofAt(x - 50, y) === h) return { x, y, h }; } return null; });
+  check('found a rooftop to walk on', !!roof);
+  await p.evaluate(r => { const P = __NC.player; P.x = r.x - 40; P.y = r.y; P.z = r.h; P.vz = 0; P.a = 0; __NC.setYaw(0); }, roof);
+  await p.keyboard.down('w'); const legs = new Set();
+  for (let k = 0; k < 6; k++) { await wait(150); legs.add((await E(() => __NC.playerMesh.userData.thighs[0].rotation.z)).toFixed(2)); }
+  await p.keyboard.up('w');
+  check('walking on a rooftop animates (no sliding)', legs.size > 2 && await p.evaluate(r => Math.abs(__NC.player.z - r.h) < 2, roof), [...legs].join(','));
+  const terr = await E(() => { const { Hgrid, MAPX0, TG, TN } = __NC; let worst = 0;
+    for (let k = 0; k < 3000; k++) { const x = MAPX0 + 400 + Math.random() * 9000, y = MAPX0 + 400 + Math.random() * 9000, gx = (x - MAPX0) / TG, gy = (y - MAPX0) / TG, i = Math.floor(gx), j = Math.floor(gy), fx = gx - i, fy = gy - j;
+      const A = Hgrid[j * TN + i], B = Hgrid[j * TN + i + 1], C = Hgrid[(j + 1) * TN + i], D = Hgrid[(j + 1) * TN + i + 1];
+      const mesh = fx >= fy ? A + (B - A) * fx + (D - B) * fy : A + (C - A) * fy + (D - C) * fx; // triangles (i,j)(i+1,j+1)(i+1,j) / (i,j)(i,j+1)(i+1,j+1)
+      worst = Math.max(worst, Math.abs(mesh - __NC.terrainH(x, y))); } return worst; });
+  check('ground height matches the drawn terrain', terr < 1e-3, terr.toFixed(5));
+  // ---- Character creator
+  await E(() => { __NC.G.state = 'play'; }); await p.keyboard.press('Escape'); await wait(300);
+  await p.click('#btnChar2'); await wait(800);
+  check('creator opens from pause', await E(() => __NC.G.state === 'creator'));
+  await p.click('#ccRows .ccChip:text-is("Woman")'); await p.click('#ccRows .ccChip:text-is("Ponytail")'); await wait(500);
+  await p.fill('#ccName', 'Nova'); await p.click('#ccDone'); await wait(300);
+  check('look is saved', await E(() => { const L = JSON.parse(localStorage.getItem('neoncoast.look')); return L.fem && L.hairStyle === 'ponytail' && L.name === 'Nova'; }));
+  await p.click('#btnResume'); await wait(300);
+
   await E(() => { __NC.G.saveT = 99; }); await wait(1200);
   const before = await E(() => ({ story: __NC.G.storyIdx, cash: Math.floor(__NC.G.cash) }));
   await p.reload(); await p.waitForSelector('#btnPlay');

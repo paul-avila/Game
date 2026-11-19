@@ -41,12 +41,28 @@ Phone layout (Pixel 7 emulation) separately confirmed: the story dialogue advanc
 10. **People walked on the water's surface** (crew following you to a boat). Anyone in deep water is now drawn swimming.
 11. **"NEON PALACE" title overlapped the pause button** inside the casino. Moved below it.
 
+## Player feedback round (v9)
+
+Fixes for the five problems reported after the first delivery, plus the character update. Each has a regression check in `tests/e2e.js`.
+
+| Report | Root cause | Fix |
+|---|---|---|
+| Rocket pack can't be taken off | The only way off was typing SKYPACK again | **F / E** (laptop) or **PACK OFF** (the CAR button, relabelled) removes it whenever no vehicle is in reach. Removed high in the air, a parachute opens. An on-screen hint says how. |
+| No way to undo a cheat | Toggle cheats only switched off by retyping the code, and nothing showed what was on | Pause → Cheats lists every active cheat as a button that turns it off, plus **Turn off all cheats**. New code **NOCHEATS**. STORMY is now a toggle. The HUD shows "CHEATS ON: …" under the minimap. |
+| Can't pin the map | The map had no pin feature, and any tap closed it | Tap or click the map to drop a pin, or tap the pin to remove it. A purple GPS route follows the road network (Dijkstra over city intersections and highways; dashed straight line where no road goes, such as the island). It's shown on the minimap and big map, with a light beam at the spot and a distance and direction readout. The pin clears on arrival. The map closes with ✕, Tab, Esc or a tap outside it, and frees the mouse while it's open so laptop players can click. |
+| Car sinks into mountains | Physics read terrain height by bilinear interpolation, but the mesh is drawn as triangles. On the raw mountain heightfield the two differ by up to **99 units (~10 m)**, and by over 3 units (a quarter of a car's height) at **8%** of countryside points (180,000 samples). | Ground height now uses the same triangle split as the mesh (verified identical to within 0.001 at 3,000 random points). The car body also rests on the average of its four wheel contact points. Slope pull is gentler and capped, and off-road drag is lower. |
+| Sliding on rooftops | The walk animation decided "in the air" by comparing height with the street under the building, not the roof | Uses the floor you're standing on (roof or ground). The same fix applies to the ALT readout and the airborne check. |
+
+**Characters.** People are rebuilt with a sculpted head: brow, eye sockets, almond eyes with lids, nose, lips, jaw and chin, with smooth skin shading for lips, brows, stubble and blush. Hair grows from a natural hairline, and long hair and ponytails hang behind the shoulders. Arms and legs are muscle-shaped with hands, thumbs and sneakers, and clothing has proper prints. Far-away people use a low-detail version: total triangles on screen went *down* slightly versus the previous build (240k vs 261k at the same view). Rendering cost was measured the same in software rendering (0.75 fps for both builds in the GPU-less test container).
+
+A **character creator** (menu or pause → Character) sets name, body, build, skin, hair, facial hair, clothes, prints, colors and extras, with a face close-up. The name is used in story dialogue. The look is stored in a fourth `localStorage` key (`neoncoast.look`, wrapped in try/catch like the others). The characters are original. They are not copies of any game's protagonists.
+
 ## Safety and content
 
 - **Trademarks:** no real brands, games or places in code or docs (searched for Ferrari, GTA, Rockstar, Vice City, Los Santos, Lamborghini, Porsche). Cars, characters, the city, gangs and the casino are original.
 - **No network access** besides loading three.js (local copy in the repo; pinned cdnjs r128 in the hosted link). No `fetch`, XHR, WebSocket, `eval` or `new Function`.
-- **HTML injection:** `innerHTML` is only used with the game's own constant strings (card faces, slot symbols, cheat list). Player-typed cheat codes are filtered to A–Z and never inserted as HTML; dialogue uses `textContent`.
-- **Storage:** three `localStorage` keys (`neoncoast.v1` save, `neoncoast.gfx`, `neoncoast.sens`), all wrapped in try/catch; the game runs normally with storage blocked.
+- **HTML injection:** `innerHTML` is only used with the game's own constant strings (card faces, slot symbols) or to clear containers. Player-typed cheat codes are filtered to A–Z and never inserted as HTML; dialogue, the cheat list and the character name use `textContent` (the name is also filtered to letters, digits, spaces and . ' -).
+- **Storage:** four `localStorage` keys (`neoncoast.v1` save, `neoncoast.gfx`, `neoncoast.sens`, `neoncoast.look`), all wrapped in try/catch; the game runs normally with storage blocked.
 - **Gambling:** in-game currency only; the table screen says so. There's no way to buy currency.
 - **Dating** is PG: conversation choices, dates to public places, gifts and a heal.
 - **Browser shortcuts:** no Ctrl-based controls (Ctrl+W would close the tab); Tab, Space and arrow keys have their default browser actions suppressed only while playing.
