@@ -196,9 +196,11 @@ const check = (name, cond, info = '') => { results.push([cond ? 'PASS' : 'FAIL',
   await E(() => { __NC.G.state = 'play'; }); await p.keyboard.press('Escape'); await wait(300);
   await p.click('#btnChar2'); await wait(800);
   check('creator opens from pause', await E(() => __NC.G.state === 'creator'));
+  await p.click('#ccStyle_custom'); await wait(300); // the stylized builder (hair, clothes, colors)
   await p.click('#ccRows .ccChip:text-is("Woman")'); await p.click('#ccRows .ccChip:text-is("Ponytail")'); await wait(500);
   await p.fill('#ccName', 'Nova'); await p.click('#ccDone'); await wait(300);
-  check('look is saved', await E(() => { const L = JSON.parse(localStorage.getItem('neoncoast.look')); return L.fem && L.hairStyle === 'ponytail' && L.name === 'Nova'; }));
+  check('look is saved', await E(() => { const L = JSON.parse(localStorage.getItem('neoncoast.look')); return L.style === 'custom' && L.fem && L.hairStyle === 'ponytail' && L.name === 'Nova'; }));
+  await p.click('#btnChar2'); await wait(500); await p.click('#ccStyle_real'); await wait(300); await p.click('#ccRows .ccChip:text-is("Man")'); await wait(300); await p.click('#ccDone'); await wait(300);
   await p.click('#btnResume'); await wait(300);
   // ---- v10: car speeds by model, connected cities, weapons, police helicopter
   const tops = await E(() => ['van', 'sedan', 'police', 'sport', 'gt', 'super'].map(k => Math.round(__NC.CARTYPES[k].max * .35)));
