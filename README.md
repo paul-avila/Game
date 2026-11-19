@@ -6,6 +6,7 @@ An original third-person 3D open-world city sandbox for phones and desktop brows
 1. Host this folder (for example, GitHub Pages: repo **Settings → Pages →** pick this branch, root folder).
 2. Open the URL on your phone or laptop. On a phone, use **Add to Home Screen** (iOS Safari: Share menu; Android Chrome: ⋮ menu); on a laptop, Chrome/Edge can **Install** it from the address bar.
 3. After the first visit it works offline, launching like an app.
+4. **Updates** arrive by themselves: when you're online, opening the app loads the newest version (the version number is at the bottom right of the main menu and pause menu). If a new version is published while the game is open, the menu updates itself, or shows a "New version ready" button if you're mid-game. If an app window still shows an old version, close it fully and reopen it, or press Ctrl+Shift+R on a computer.
 
 You can also open `index.html` directly. Offline caching needs it to be served over http(s).
 

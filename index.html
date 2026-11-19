@@ -107,7 +107,8 @@
     &nbsp;•&nbsp; <b>RUN</b> sprint (on foot) / handbrake (driving) &nbsp;•&nbsp; <b>⇄</b> switch weapon<br>
     Follow the gold <b>★</b> for the story, walk into green <b>$</b> markers for side jobs, and visit the <b>Neon Palace</b> casino downtown. Tap the minimap for the full map. Take the highways to Pine Hollow, Sunset Bluffs, Copper Ridge and Northgate. Weapons 1–7 (laptop) or ⇄. Type cheat codes any time, or use Pause → Cheats.
   </div>
-  <div class="ver" style="position:absolute;right:14px;bottom:10px;font-size:12px;opacity:.6">v10 · new cities, police helicopters, sniper &amp; rocket launcher</div>
+  <div class="ver" style="position:absolute;right:14px;bottom:10px;font-size:12px;opacity:.6"></div>
+  <button id="btnUpdate" class="hidden" style="position:absolute;left:50%;top:14px;transform:translateX(-50%);min-width:0;font-size:15px;padding:8px 18px">New version ready · tap to update</button>
 </div>
 
 <div id="pause" class="overlay hidden">
@@ -120,6 +121,7 @@
   <div class="row"><button id="btnChar2" class="alt">Character</button></div>
   <div class="row"><button id="btnFull" class="alt">Fullscreen</button></div>
   <div class="row"><button id="btnQuit" class="dim">Main menu</button></div>
+  <div class="ver" style="font-size:12px;opacity:.6;margin-top:4px"></div>
 </div>
 
 <div id="creator" class="hidden">
@@ -4946,8 +4948,22 @@ init3D();
 requestAnimationFrame(frame);
 window.__NC = { G, player, places, startGame, press: k => { pressed[k] = true; }, hurt: (p, d) => hurtPed(p, d, true, p.x, p.y), get STORY() { return STORY; }, get ISL() { return ISL; }, enterCasino: () => enterCasino(), get table() { return table; }, get inputMode() { return inputMode; }, mouse, get roads() { return roads; }, summit, AIRF, TOWN, makeCar: (...a) => makeCar(...a), cheat: c => runCheat(c), setYaw: v => { camYaw = v; camDragT = 99; }, get scene() { return scene; }, get R3() { return R3; }, get cars() { return cars; }, get peds() { return peds; }, get rockets() { return rockets; }, spawnCopHeli: (x, y) => spawnCopHeli(x, y), isScoped: () => isScoped(), shoot: () => shoot(), SATS, WEAPONS, CARTYPES, setPin: (x, y) => setPin(x, y), get route() { return G.route; }, activeCheats: () => activeCheats(), groundH: (x, y) => groundH(x, y), terrainH: (x, y) => terrainH(x, y), enterCar: c => enterCar(c), floorAt: (x, y, z) => floorAt(x, y, z), roofAt: (x, y) => roofAt(x, y), get look() { return PLOOK; }, get playerMesh() { return playerMesh; }, get Hgrid() { return Hgrid; }, MAPX0, TG, TN };
 
+// version label + updates: the page always asks GitHub for the newest files when online (see sw.js);
+// if a new version arrives while the game is open, the menu offers a one-tap update
+const GAME_VERSION = 'v10.1';
+for (const el of document.querySelectorAll('.ver')) el.textContent = GAME_VERSION + ' · new cities, police helicopters, sniper & rocket launcher';
+$('btnUpdate').onclick = () => { save(); location.reload(); };
 if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
-  window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => { }));
+  let hadController = !!navigator.serviceWorker.controller;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (!hadController) { hadController = true; return; }   // first install, nothing to update
+    if (G.state === 'menu') location.reload(); else { $('btnUpdate').classList.remove('hidden'); msg('New version ready: open the main menu to update', 5); }
+  });
+  window.addEventListener('load', () => navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).then(reg => {
+    const check = () => reg.update().catch(() => { });
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) check(); });
+    setInterval(check, 20 * 60 * 1000);
+  }).catch(() => { }));
 }
 })();
 </script>
