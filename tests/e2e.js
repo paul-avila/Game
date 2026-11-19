@@ -202,7 +202,7 @@ const check = (name, cond, info = '') => { results.push([cond ? 'PASS' : 'FAIL',
   await p.click('#btnResume'); await wait(300);
   // ---- v10: car speeds by model, connected cities, weapons, police helicopter
   const tops = await E(() => ['van', 'sedan', 'police', 'sport', 'gt', 'super'].map(k => Math.round(__NC.CARTYPES[k].max * .35)));
-  check('top speed depends on the car (van → supercar), max 230 km/h', tops.every((v, i) => !i || v > tops[i - 1]) && tops[5] <= 230, tops.join(' < '));
+  check('top speed depends on the car (van → supercar), max 185 km/h', tops.every((v, i) => !i || v > tops[i - 1]) && tops[5] <= 185, tops.join(' < '));
   for (const code of ['BLUFFS', 'COPPER', 'NORTHGATE']) {
     await p.evaluate(c => __NC.cheat(c), code); await wait(400);
     check('teleport into ' + code, await p.evaluate(c => { const C = __NC.SATS.find(q => q.code === c), P = __NC.player; return Math.abs(P.x - C.x) < C.half && Math.abs(P.y - C.y) < C.half && Math.abs(P.z - C.h) < 8; }, code));

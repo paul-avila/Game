@@ -67,6 +67,21 @@ A **character creator** (menu or pause → Character) sets name, body, build, sk
 | Weapons | Shotgun (7 pellets), assault rifle, sniper rifle (zoom scope with right click or SCOPE), rocket launcher (explosive; locks on to aircraft). Gun store sells them all; 1–7 picks a weapon on a keyboard. Old saves migrate (pistol/SMG ammo kept). | e2e: key 7 selects the launcher, scope engages, rocket wrecks a car |
 | Bug fixes found while testing | Explosions damaged cars without setting them alight (no chain reactions). Explosion debris spawned at street level on hills. The map-pin sound used a missing effect name. | Checked in the browser: a rocket-hit car now catches fire |
 
+## v10.3: easier driving
+
+Player report: cars still too fast and hard to control at speed. Measured with a fixed-step driving simulation on a flat street:
+
+| | Before (v10.2) | After (v10.3) |
+|---|---|---|
+| Vento S top speed | 220 km/h | 180 km/h |
+| Vento S 0–100 km/h | 0.9 s | 2.3 s |
+| Sedan 0–100 km/h | 2.0 s | 4.6 s |
+| Turn from a 1-second full steer at top speed, Vento S | 41° (at 220 km/h) | 30° (at 180 km/h) |
+| Same, sedan | 59° | 50° |
+| Braking 100 → 0 km/h, Vento S / sedan | 0.35 s / 0.6 s | 1.1 s / 1.2 s |
+
+Changes: lower top speeds by model (van 90 → Vento S 180 km/h); acceleration tapers toward top speed; much lower drag under throttle, so each car still reaches its top speed; brakes the same for every model and no longer violent; speed-sensitive steering lock and slower turn-in at speed for the player, with a quick return to centre; phone joystick has a dead zone and a finer response near the centre; softer wall bounces.
+
 ## Safety and content
 
 - **Trademarks:** no real brands, games or places in code or docs (searched for Ferrari, GTA, Rockstar, Vice City, Los Santos, Lamborghini, Porsche). Cars, characters, the city, gangs and the casino are original.

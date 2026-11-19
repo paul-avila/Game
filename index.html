@@ -579,16 +579,16 @@ function mapClick(cx, cy) {
 // ================================================================ entities
 const CARNAME = { sedan: 'Sedan', sport: 'Coupe', van: 'Van', taxi: 'Taxi', police: 'Police cruiser', super: 'Vento S (mid-engine supercar)', gt: 'Vento GT (grand tourer)', heli: 'Helicopter: hold UP to lift off', boat: 'Speedboat', plane: 'Stunt plane: push forward to take off' };
 const CARTYPES = {
-  sedan: { len: 44, wid: 22, max: 386, acc: 200, grip: 7, turn: 2.6, hp: 100, cols: ['#d94040', '#3d7bd9', '#e0e0e0', '#2c2c34', '#3aa66b', '#c9a227', '#8e44ad', '#e67e22'] },
-  sport: { len: 46, wid: 22, max: 514, acc: 310, grip: 8, turn: 2.9, hp: 80, cols: ['#ff2d6f', '#ffd400', '#00d0ff', '#ff7a00', '#f2f2f2'] },
-  van: { len: 54, wid: 26, max: 300, acc: 160, grip: 6, turn: 2.0, hp: 150, cols: ['#f1f1f1', '#5b6770', '#c8b27a', '#3c6e9f'] },
-  taxi: { len: 44, wid: 22, max: 386, acc: 205, grip: 7, turn: 2.6, hp: 100, cols: ['#ffcc1a'] },
-  police: { len: 46, wid: 23, max: 486, acc: 300, grip: 8.5, turn: 2.8, hp: 140, cols: ['#f4f4f4'] },
-  super: { len: 48, wid: 23.5, max: 629, acc: 360, grip: 9.5, turn: 3.0, hp: 90, pitch: 1.4, cols: ['#c8101e', '#c8101e', '#c8101e', '#f5c400', '#111111', '#f4f4f4', '#1d3f8f'] },
-  boat: { len: 46, wid: 18, max: 430, acc: 240, grip: 1.7, turn: 2.2, hp: 140, boat: true, cols: ['#f4f4f4', '#c8101e', '#1d3f8f', '#111111'] },
+  sedan: { len: 44, wid: 22, max: 329, acc: 110, grip: 7, turn: 2.6, hp: 100, cols: ['#d94040', '#3d7bd9', '#e0e0e0', '#2c2c34', '#3aa66b', '#c9a227', '#8e44ad', '#e67e22'] },
+  sport: { len: 46, wid: 22, max: 429, acc: 142, grip: 8, turn: 2.9, hp: 80, cols: ['#ff2d6f', '#ffd400', '#00d0ff', '#ff7a00', '#f2f2f2'] },
+  van: { len: 54, wid: 26, max: 257, acc: 90, grip: 6, turn: 2.0, hp: 150, cols: ['#f1f1f1', '#5b6770', '#c8b27a', '#3c6e9f'] },
+  taxi: { len: 44, wid: 22, max: 329, acc: 112, grip: 7, turn: 2.6, hp: 100, cols: ['#ffcc1a'] },
+  police: { len: 46, wid: 23, max: 414, acc: 140, grip: 8.5, turn: 2.8, hp: 140, cols: ['#f4f4f4'] },
+  super: { len: 48, wid: 23.5, max: 514, acc: 158, grip: 9.5, turn: 3.0, hp: 90, pitch: 1.4, cols: ['#c8101e', '#c8101e', '#c8101e', '#f5c400', '#111111', '#f4f4f4', '#1d3f8f'] },
+  boat: { len: 46, wid: 18, max: 343, acc: 150, grip: 1.7, turn: 2.2, hp: 140, boat: true, cols: ['#f4f4f4', '#c8101e', '#1d3f8f', '#111111'] },
   heli: { len: 50, wid: 16, max: 440, acc: 300, grip: 3, turn: 1.9, hp: 160, fly: 'heli', cols: ['#1d1d22', '#c8101e', '#f4f4f4', '#1d3f8f'] },
   plane: { len: 70, wid: 18, max: 920, acc: 240, grip: 3, turn: 1.2, hp: 120, fly: 'plane', cols: ['#c8101e', '#f4f4f4', '#f5c400'] },
-  gt: { len: 48, wid: 22.5, max: 571, acc: 330, grip: 8.8, turn: 2.8, hp: 100, pitch: 1.22, cols: ['#c8101e', '#c8101e', '#7a0d12', '#1b1b1b', '#c0c4c8', '#0e3b2e'] },
+  gt: { len: 48, wid: 22.5, max: 471, acc: 148, grip: 8.8, turn: 2.8, hp: 100, pitch: 1.22, cols: ['#c8101e', '#c8101e', '#7a0d12', '#1b1b1b', '#c0c4c8', '#0e3b2e'] },
 };
 let cars = [], peds = [], bullets = [], parts = [], pickups = [], skids = [];
 let carId = 1;
@@ -2123,17 +2123,19 @@ function drivePhysics(c, thr, steer, hb, dt) {
     fwd -= 170 * clamp(sl, -1.2, 1.2) * dt;
     if (!onRoadNet(c.x, c.y)) { c.offroad = true; mult *= .75; fwd *= Math.exp(-.3 * dt); }
   }
-  if (thr > 0) fwd += (fwd < 0 ? T.acc * 2.2 : T.acc * mult * boost * (boost > 1 ? 1.3 : 1)) * thr * dt;
-  else if (thr < 0) fwd += (fwd > 10 ? T.acc * 2.2 : T.acc * .6) * thr * dt;
-  fwd *= Math.exp(-(thr === 0 ? 1.1 : .35) * dt);
+  const taper = 1 - .7 * Math.pow(clamp(Math.abs(fwd) / (T.max * mult * boost), 0, 1), 1.8);
+  if (thr > 0) fwd += (fwd < 0 ? 380 : T.acc * taper * mult * boost * (boost > 1 ? 1.3 : 1)) * thr * dt;
+  else if (thr < 0) fwd += (fwd > 10 ? 200 + T.acc * .3 : T.acc * .6 * taper) * thr * dt;
+  fwd *= Math.exp(-(thr === 0 ? .6 : .1) * dt);
   if (hb) fwd *= Math.exp(-1.6 * dt);
   fwd = clamp(fwd, -T.max * .35, T.max * mult * boost);
   const grip = hb ? 1.4 : T.grip * (1 + Math.abs(fwd) / 450);
   const latBefore = lat;
   lat *= Math.exp(-grip * dt);
   const sf = clamp(fwd / 140, -1, 1), spd = Math.abs(fwd);
-  c.steerS = (c.steerS || 0) + (steer - (c.steerS || 0)) * Math.min(1, dt * (c === player.car ? 7 : 12));
-  const yawScale = 1 / (1 + Math.pow(spd / 340, 1.6));
+  const turnIn = c === player.car ? (Math.abs(steer) < Math.abs(c.steerS || 0) || steer * (c.steerS || 0) < 0 ? 9 : lerp(6.5, 2.6, clamp(spd / 450, 0, 1))) : 12;
+  c.steerS = (c.steerS || 0) + (steer - (c.steerS || 0)) * Math.min(1, dt * turnIn);
+  const yawScale = 1 / (1 + Math.pow(spd / (c === player.car ? 290 : 340), 1.8));
   c.a += c.steerS * T.turn * (hb ? 1.35 : 1) * dt * sf * (hb ? Math.max(yawScale, .55) : yawScale);
   c.steerV = (c.steerV || 0) + (steer - (c.steerV || 0)) * Math.min(1, dt * 10);
   const ca2 = Math.cos(c.a), sa2 = Math.sin(c.a);
@@ -2162,7 +2164,7 @@ function carWorldCollide(c) {
     if (n) {
       c.x += o.x - cc[0]; c.y += o.y - cc[1];
       const vn = c.vx * n[0] + c.vy * n[1];
-      if (vn < 0) { c.vx -= vn * n[0] * 1.35; c.vy -= vn * n[1] * 1.35; hitAny = Math.max(hitAny, -vn); }
+      if (vn < 0) { c.vx -= vn * n[0] * 1.2; c.vy -= vn * n[1] * 1.2; c.vx *= .96; c.vy *= .96; hitAny = Math.max(hitAny, -vn); }
     }
   }
   if (hitAny > 150) {
@@ -2292,7 +2294,7 @@ function startMission(giver) {
     case 'hill': {
       const roadPath = roads[0].pts, end = roadPath.length - 1, s0 = dist(from.x, from.y, roadPath[0].x, roadPath[0].y) < dist(from.x, from.y, roadPath[end].x, roadPath[end].y) ? 0 : end, dir = s0 ? -1 : 1;
       for (let k = 1; k <= 12; k++) { const i = clamp(s0 + dir * k * 26, 0, end); m.cps.push({ x: roadPath[i].x, y: roadPath[i].y }); }
-      m.type = 'race'; m.tx = m.cps[0].x; m.ty = m.cps[0].y; m.reward = 3000; m.timer = dist(from.x, from.y, m.tx, m.ty) / 220 + 30;
+      m.type = 'race'; m.tx = m.cps[0].x; m.ty = m.cps[0].y; m.reward = 3000; m.timer = dist(from.x, from.y, m.tx, m.ty) / 150 + 35;
       m.text = 'Mountain race: reach the highway checkpoints'; msg('JOB: Mountain run — race the highway up into the mountains.', 4); break;
     }
     case 'taxi': {
@@ -2337,7 +2339,7 @@ function updateMission(dt) {
     case 'delivery':
       if (m.stage === 0 && near()) {
         const b = randomSidewalk({ x: px, y: py }, 1300, 2400); m.tx = b.x; m.ty = b.y; m.stage = 1;
-        m.timer = dist(px, py, b.x, b.y) / 230 + 18; m.text = 'Deliver the package'; sfx('pick');
+        m.timer = dist(px, py, b.x, b.y) / 140 + 20; m.text = 'Deliver the package'; sfx('pick');
       } else if (m.stage === 1 && near()) missionDone();
       break;
     case 'getaway':
@@ -2361,12 +2363,12 @@ function updateMission(dt) {
       if (near(70) && player.car) {
         m.stage++; sfx('pick');
         if (m.stage >= m.cps.length) { missionDone(); return; }
-        m.tx = m.cps[m.stage].x; m.ty = m.cps[m.stage].y; m.timer += 9; m.text = `Checkpoint ${m.stage}/${m.cps.length}`;
+        m.tx = m.cps[m.stage].x; m.ty = m.cps[m.stage].y; m.timer += 12; m.text = `Checkpoint ${m.stage}/${m.cps.length}`;
       } else if (m.stage === 0) { m.text = 'Race: first checkpoint!'; }
       break;
     case 'taxi':
       if (!player.car) { m.text = m.stage === 1 ? 'Get back in the car!' : 'Get a car for your passenger'; if (m.stage === 1) m.timer += dt; return; }
-      if (m.stage === 0) { m.text = 'Pick up the passenger'; if (near(55) && Math.hypot(player.car.vx, player.car.vy) < 90) { const b = randomSidewalk({ x: px, y: py }, 900, 1800); m.tx = b.x; m.ty = b.y; m.stage = 1; m.timer = dist(px, py, b.x, b.y) / 240 + 15; m.text = 'Drive the passenger to the marker'; sfx('door'); } }
+      if (m.stage === 0) { m.text = 'Pick up the passenger'; if (near(55) && Math.hypot(player.car.vx, player.car.vy) < 90) { const b = randomSidewalk({ x: px, y: py }, 900, 1800); m.tx = b.x; m.ty = b.y; m.stage = 1; m.timer = dist(px, py, b.x, b.y) / 145 + 20; m.text = 'Drive the passenger to the marker'; sfx('door'); } }
       else if (m.stage === 1 && near(55) && Math.hypot(player.car.vx, player.car.vy) < 90) {
         m.fares++; const fare = rint(150, 320); G.cash += fare; sfx('cash'); msg(`Fare paid: +${fmtCash(fare)}`);
         if (m.fares >= 3) { m.reward = 500; missionDone(); return; }
@@ -2672,7 +2674,7 @@ function updatePlayer(dt) {
     let thr = 0, steer = 0; const hb = runHeld();
     if (kx || ky) { thr = -ky; steer = kx; }
     else if (joy.active && Math.hypot(joy.vx, joy.vy) > .15) {
-      steer = clamp(Math.sign(joy.vx) * Math.pow(Math.abs(joy.vx), 1.5) * 1.3, -1, 1); thr = clamp(-joy.vy * 1.5, -1, 1);
+      const jx = Math.max(0, Math.abs(joy.vx) - .08) / .92; steer = clamp(Math.sign(joy.vx) * Math.pow(jx, 1.7) * 1.25, -1, 1); thr = clamp(-joy.vy * 1.5, -1, 1);
       if (Math.abs(thr) < .18) thr = 0;
     }
     if (c.burn > 0 && c.hp < 0) thr *= .3;
@@ -5009,12 +5011,12 @@ buildMinimap();
 resize();
 init3D();
 requestAnimationFrame(frame);
-window.__NC = { G, player, places, startGame, press: k => { pressed[k] = true; }, hurt: (p, d) => hurtPed(p, d, true, p.x, p.y), get STORY() { return STORY; }, get ISL() { return ISL; }, enterCasino: () => enterCasino(), get table() { return table; }, get inputMode() { return inputMode; }, mouse, get roads() { return roads; }, summit, AIRF, TOWN, makeCar: (...a) => makeCar(...a), cheat: c => runCheat(c), setYaw: v => { camYaw = v; camDragT = 99; }, get scene() { return scene; }, get R3() { return R3; }, get cars() { return cars; }, get peds() { return peds; }, get rockets() { return rockets; }, spawnCopHeli: (x, y) => spawnCopHeli(x, y), isScoped: () => isScoped(), mapToS: (x, y) => mapToS(x, y, mapGeom()), MV, shoot: () => shoot(), SATS, WEAPONS, CARTYPES, setPin: (x, y) => setPin(x, y), get route() { return G.route; }, activeCheats: () => activeCheats(), groundH: (x, y) => groundH(x, y), terrainH: (x, y) => terrainH(x, y), enterCar: c => enterCar(c), floorAt: (x, y, z) => floorAt(x, y, z), roofAt: (x, y) => roofAt(x, y), get look() { return PLOOK; }, get playerMesh() { return playerMesh; }, get Hgrid() { return Hgrid; }, MAPX0, TG, TN };
+window.__NC = { G, player, places, startGame, press: k => { pressed[k] = true; }, hurt: (p, d) => hurtPed(p, d, true, p.x, p.y), get STORY() { return STORY; }, get ISL() { return ISL; }, enterCasino: () => enterCasino(), get table() { return table; }, get inputMode() { return inputMode; }, mouse, get roads() { return roads; }, summit, AIRF, TOWN, makeCar: (...a) => makeCar(...a), cheat: c => runCheat(c), setYaw: v => { camYaw = v; camDragT = 99; }, get scene() { return scene; }, get R3() { return R3; }, get cars() { return cars; }, get peds() { return peds; }, get rockets() { return rockets; }, spawnCopHeli: (x, y) => spawnCopHeli(x, y), isScoped: () => isScoped(), mapToS: (x, y) => mapToS(x, y, mapGeom()), MV, drive: (c, thr, steer, hb, dt) => drivePhysics(c, thr, steer, hb, dt), shoot: () => shoot(), SATS, WEAPONS, CARTYPES, setPin: (x, y) => setPin(x, y), get route() { return G.route; }, activeCheats: () => activeCheats(), groundH: (x, y) => groundH(x, y), terrainH: (x, y) => terrainH(x, y), enterCar: c => enterCar(c), floorAt: (x, y, z) => floorAt(x, y, z), roofAt: (x, y) => roofAt(x, y), get look() { return PLOOK; }, get playerMesh() { return playerMesh; }, get Hgrid() { return Hgrid; }, MAPX0, TG, TN };
 
 // version label + updates: the page always asks GitHub for the newest files when online (see sw.js);
 // if a new version arrives while the game is open, the menu offers a one-tap update
-const GAME_VERSION = 'v10.2';
-for (const el of document.querySelectorAll('.ver')) el.textContent = GAME_VERSION + ' · zoomable map, new cities, police helicopters, sniper & rocket launcher';
+const GAME_VERSION = 'v10.3';
+for (const el of document.querySelectorAll('.ver')) el.textContent = GAME_VERSION + ' · easier driving, zoomable map, new cities, police helicopters';
 $('btnUpdate').onclick = () => { save(); location.reload(); };
 if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
   let hadController = !!navigator.serviceWorker.controller;
