@@ -4,24 +4,29 @@ An original third-person 3D open-world city sandbox for phones and desktop brows
 
 ## Play on your phone
 1. Host this folder (for example, GitHub Pages: repo **Settings → Pages →** pick this branch, root folder).
-2. Open the URL on your phone, then use **Add to Home Screen** (iOS Safari: Share menu; Android Chrome: ⋮ menu).
+2. Open the URL on your phone or laptop. On a phone, use **Add to Home Screen** (iOS Safari: Share menu; Android Chrome: ⋮ menu); on a laptop, Chrome/Edge can **Install** it from the address bar.
 3. After the first visit it works offline, launching like an app.
 
 You can also open `index.html` directly. Offline caching needs it to be served over http(s).
 
 ## Controls
-| Touch | Keyboard | Action |
+The game picks the right layout automatically: touch buttons on phones and tablets, mouse and keyboard on laptops and desktops. Pause → **Controls** shows the full list and has a mouse sensitivity slider.
+
+| Action | Laptop / PC | Phone |
 |---|---|---|
-| Left thumb | WASD / arrows | Move · steer (up = gas, down = brake) |
-| Drag right side | J / L or mouse drag | Look around |
-| FIRE | Space | Shoot / punch (auto-aim) |
-| CAR | E or F | Enter, carjack, exit |
-| RUN / BRAKE | Shift | Sprint · handbrake drift |
-| ⇄ | Q | Switch weapon |
-| Tap minimap | Tab | Full map |
-| RECRUIT / DISBAND | G | Recruit Palms gang members near you (up to 4) |
-| RUN → UP / BOOST, ⇄ → DOWN / SLOW | Shift / C | Climb and descend (helicopter, rocket pack) or throttle (plane) |
-| II | P / Esc | Pause |
+| Move / drive | WASD or arrows | Left thumb |
+| Look around | Mouse (click the game to capture it), or J / L | Drag right side |
+| Shoot | Left click, K, or Space on foot | FIRE |
+| Aim over the shoulder | Hold right click | auto-aim |
+| Sprint | Shift | RUN |
+| Handbrake | Space or Shift | BRAKE |
+| Enter / exit vehicle | F or E | CAR |
+| Switch weapon | Q or mouse wheel | ⇄ |
+| Fly up / down | Space / C | UP / DOWN |
+| Recruit / dismiss crew | G | RECRUIT |
+| Map | Tab | Tap minimap |
+| Pause | Esc | II |
+| Cheats | Type a code any time | Pause → Cheats |
 
 ## Features
 - Third-person 3D (three.js, bundled locally) with realistic lighting: real-time sun shadows, reflective car paint/glass/water, sunrise-to-night sky, textured streets, glowing streetlights; Graphics High/Low in the pause menu (auto-drops to Low on slow phones); 12×12-block coastal city: downtown towers, neighborhoods, parks, beach

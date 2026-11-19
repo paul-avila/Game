@@ -39,6 +39,13 @@
   #cheatList{display:grid;grid-template-columns:repeat(auto-fill,minmax(165px,1fr));gap:6px}
   #cheatList button{min-width:0;font-size:12px;font-weight:600;padding:7px 9px;text-align:left;background:#2a1f66;box-shadow:none;border-radius:10px}
   #cheatList b{display:block;color:#ffe066;letter-spacing:1px}
+  .keys{border-collapse:collapse;font-size:13px;text-align:left}
+  .keys th{color:#ffe066;font-size:12px;letter-spacing:1px;text-transform:uppercase;padding:4px 8px}
+  .keys td{padding:4px 8px;border-top:1px solid #ffffff18;vertical-align:top}
+  .keys td:first-child{opacity:.75;white-space:nowrap}
+  kbd{display:inline-block;min-width:1.4em;padding:1px 6px;margin:0 2px 2px 0;border-radius:6px;background:#2a1f66;border:1px solid #4d5cff;font:700 12px system-ui,sans-serif;text-align:center}
+  .sens{display:flex;gap:10px;align-items:center;justify-content:center;font-size:14px}
+  .sens input{width:180px;touch-action:manipulation}
   #shop .panel{background:#1a1240;border:2px solid #ff4f9a;border-radius:18px;padding:18px;display:flex;flex-direction:column;gap:10px;min-width:260px}
   #shop .overlay{background:#0008}
   #toast{position:fixed;left:50%;top:18%;transform:translateX(-50%);z-index:5;pointer-events:none}
@@ -54,10 +61,10 @@
   <div class="row"><button id="btnPlay">PLAY</button></div>
   <div class="row"><button id="btnNew" class="dim">New game</button></div>
   <div class="help">
+    <b>Laptop:</b> click to capture the mouse · WASD move · mouse look · left click shoot · right click aim · F car · Shift sprint · Space handbrake · Tab map · Esc menu<br>
     <b>Phone:</b> left thumb = move / steer (up = gas) &nbsp;•&nbsp; drag right side = look around &nbsp;•&nbsp; <b>FIRE</b> shoot/punch &nbsp;•&nbsp; <b>CAR</b> enter/exit vehicles
     &nbsp;•&nbsp; <b>RUN</b> sprint (on foot) / handbrake (driving) &nbsp;•&nbsp; <b>⇄</b> switch weapon<br>
-    <b>Keyboard:</b> WASD/arrows, J/L or mouse-drag to look, Space fire, E/F car, Shift run, Q weapon, Tab map, Esc pause — type cheat codes any time<br>
-    Walk into green <b>$</b> markers for jobs. Tap the minimap for the full map. Head west or north for the mountains. Cheats are in the pause menu.
+    Walk into green <b>$</b> markers for jobs. Tap the minimap for the full map. Head west or north for the mountains. Type cheat codes any time, or use Pause → Cheats.
   </div>
 </div>
 
@@ -67,7 +74,34 @@
   <div class="row"><button id="btnSound" class="alt">Sound: ON</button></div>
   <div class="row"><button id="btnGfx" class="alt">Graphics: HIGH</button></div>
   <div class="row"><button id="btnCheats" class="alt">Cheats</button></div>
+  <div class="row"><button id="btnControls" class="alt">Controls</button></div>
+  <div class="row"><button id="btnFull" class="alt">Fullscreen</button></div>
   <div class="row"><button id="btnQuit" class="dim">Main menu</button></div>
+</div>
+
+<div id="controls" class="overlay hidden" style="background:#000d">
+  <div class="panel">
+    <div style="font-size:24px;font-weight:800">CONTROLS</div>
+    <table class="keys">
+      <tr><th></th><th>Laptop / PC</th><th>Phone</th></tr>
+      <tr><td>Move / drive</td><td><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> or arrows</td><td>Left thumb</td></tr>
+      <tr><td>Look around</td><td>Mouse (click the game first), or <kbd>J</kbd> <kbd>L</kbd></td><td>Drag right side</td></tr>
+      <tr><td>Shoot</td><td>Left click, <kbd>K</kbd>, or <kbd>Space</kbd> on foot</td><td>FIRE</td></tr>
+      <tr><td>Aim (over the shoulder)</td><td>Hold right click</td><td>auto-aim</td></tr>
+      <tr><td>Sprint</td><td><kbd>Shift</kbd></td><td>RUN</td></tr>
+      <tr><td>Handbrake</td><td><kbd>Space</kbd> or <kbd>Shift</kbd></td><td>BRAKE</td></tr>
+      <tr><td>Enter / exit vehicle</td><td><kbd>F</kbd> or <kbd>E</kbd></td><td>CAR</td></tr>
+      <tr><td>Switch weapon</td><td><kbd>Q</kbd> or mouse wheel</td><td>⇄</td></tr>
+      <tr><td>Fly up / down</td><td><kbd>Space</kbd> / <kbd>C</kbd></td><td>UP / DOWN</td></tr>
+      <tr><td>Plane pitch / turn</td><td><kbd>W</kbd><kbd>S</kbd> / <kbd>A</kbd><kbd>D</kbd></td><td>Left thumb</td></tr>
+      <tr><td>Recruit / dismiss crew</td><td><kbd>G</kbd></td><td>RECRUIT</td></tr>
+      <tr><td>Map</td><td><kbd>Tab</kbd></td><td>Tap minimap</td></tr>
+      <tr><td>Pause</td><td><kbd>Esc</kbd></td><td>II</td></tr>
+      <tr><td>Cheats</td><td>Type a code any time</td><td>Pause → Cheats</td></tr>
+    </table>
+    <label class="sens">Mouse sensitivity <input type="range" id="sens" min="1" max="12" step="1"></label>
+    <button id="ctrlBack" class="alt">Back</button>
+  </div>
 </div>
 
 <div id="cheats" class="overlay hidden" style="background:#000d">
@@ -1025,7 +1059,22 @@ function updateAudio(dt) {
 
 // ================================================================ input
 const keys = {};
-const look = { id: null, x: 0 };
+const look = { id: null, x: 0, y: 0 };
+let inputMode = 'touch';
+const mouse = { fire: false, aim: false, locked: false, sens: 5 };
+try { mouse.sens = +localStorage.getItem('neoncoast.sens') || 5; } catch (e) { }
+function tryLock() {
+  if (inputMode !== 'kbm' || document.pointerLockElement === cv || !cv.requestPointerLock) return;
+  try { const r = cv.requestPointerLock(); if (r && r.catch) r.catch(() => { }); } catch (e) { }
+}
+function unlockMouse() { mouse.fire = mouse.aim = false; try { if (document.pointerLockElement) document.exitPointerLock(); } catch (e) { } }
+document.addEventListener('pointerlockchange', () => {
+  const was = mouse.locked; mouse.locked = document.pointerLockElement === cv;
+  if (!mouse.locked) { mouse.fire = mouse.aim = false; if (was && G.state === 'play') pauseGame(); }
+});
+cv.addEventListener('contextmenu', e => e.preventDefault());
+document.addEventListener('pointerlockerror', () => { mouse.lockFailed = true; });
+cv.addEventListener('wheel', e => { e.preventDefault(); if (G.state !== 'play') return; const n = performance.now(); if (n - (mouse.wheelT || 0) > 160) { mouse.wheelT = n; pressed.wpn = true; } }, { passive: false });
 const joy = { id: null, bx: 0, by: 0, x: 0, y: 0, vx: 0, vy: 0, active: false };
 const btn = {};
 function layoutButtons() {
@@ -1045,7 +1094,21 @@ cv.addEventListener('pointerdown', e => {
   e.preventDefault(); initAudio();
   if (G.bigMap) { G.bigMap = false; return; }
   if (G.state !== 'play') return;
-  { const mr = clamp(Math.min(W, H) * .17, 52, 86); if (dist(e.clientX, e.clientY, 12 + mr, 10 + mr) < mr + 6) { G.bigMap = true; return; } }
+  if (!mouse.locked) { const mr = clamp(Math.min(W, H) * .17, 52, 86); if (dist(e.clientX, e.clientY, 12 + mr, 10 + mr) < mr + 6) { G.bigMap = true; return; } }
+  if (e.pointerType === 'mouse') {
+    inputMode = 'kbm';
+    if (!mouse.locked) {
+      const k0 = btnAt(e.clientX, e.clientY);
+      if (k0 === 'pause' || k0 === 'gang') { pressed[k0] = true; return; }
+      tryLock(); look.id = e.pointerId; look.x = e.clientX; look.y = e.clientY;
+      if (e.button === 2) mouse.aim = true;
+      if (e.button === 0 && mouse.lockFailed) mouse.fire = true;
+      return;
+    }
+    if (e.button === 0) mouse.fire = true; else if (e.button === 2) mouse.aim = true;
+    return;
+  }
+  inputMode = 'touch';
   const k = btnAt(e.clientX, e.clientY);
   if (k) { btn[k].down = true; btn[k].id = e.pointerId; pressed[k] = true; return; }
   if (e.clientX < W * .5 && joy.id === null) {
@@ -1053,7 +1116,15 @@ cv.addEventListener('pointerdown', e => {
   } else if (look.id === null) { look.id = e.pointerId; look.x = e.clientX; }
 }, { passive: false });
 cv.addEventListener('pointermove', e => {
-  if (e.pointerId === look.id) { camYaw += (e.clientX - look.x) * .008; look.x = e.clientX; camDragT = 1.5; }
+  if (mouse.locked && e.pointerType === 'mouse') {
+    if (Math.abs(e.movementX) > 250 || Math.abs(e.movementY) > 250) return; // ignore capture spikes
+    const k = .00045 * mouse.sens;
+    camYaw += e.movementX * k; camPitch = clamp(camPitch + e.movementY * k * .8, -.4, .9); camDragT = 1.4; return;
+  }
+  if (e.pointerId === look.id) {
+    camYaw += (e.clientX - look.x) * .008; look.x = e.clientX; camDragT = 1.5;
+    if (e.pointerType === 'mouse') { camPitch = clamp(camPitch + (e.clientY - look.y) * .005, -.4, .9); look.y = e.clientY; }
+  }
   if (e.pointerId === joy.id) {
     const R = 60; let dx = e.clientX - joy.bx, dy = e.clientY - joy.by; const d = Math.hypot(dx, dy);
     if (d > R) { joy.bx += dx / d * (d - R); joy.by += dy / d * (d - R); dx = e.clientX - joy.bx; dy = e.clientY - joy.by; }
@@ -1061,6 +1132,7 @@ cv.addEventListener('pointermove', e => {
   }
 }, { passive: false });
 function endPtr(e) {
+  if (e.pointerType === 'mouse' && e.type !== 'pointerleave') { if (e.button === 0) mouse.fire = false; if (e.button === 2) mouse.aim = false; }
   if (e.pointerId === joy.id) { joy.id = null; joy.active = false; joy.vx = joy.vy = 0; }
   if (e.pointerId === look.id) look.id = null;
   for (const k in btn) if (btn[k].id === e.pointerId) { btn[k].down = false; btn[k].id = null; }
@@ -1070,16 +1142,17 @@ window.addEventListener('keydown', e => {
   if (e.target && e.target.tagName === 'INPUT') return;
   initAudio();
   const k = e.key.toLowerCase();
+  if (k !== 'escape') inputMode = 'kbm';
   if (/^[a-z]$/.test(k) && G.state !== 'menu') cheatKey(k.toUpperCase());
-  if (k === 'tab' && (G.state === 'play' || G.bigMap)) { e.preventDefault(); G.bigMap = !G.bigMap; return; } if (!keys[k]) { if (k === 'e' || k === 'f') pressed.car = true; if (k === 'g') pressed.gang = true; if (k === 'q') pressed.wpn = true; if (k === 'escape') pressed.pause = true; if (k === ' ') pressed.fire = true; }
+  if (k === 'tab' && (G.state === 'play' || G.bigMap)) { e.preventDefault(); G.bigMap = !G.bigMap; return; } if (!keys[k]) { if (k === 'e' || k === 'f') pressed.car = true; if (k === 'g') pressed.gang = true; if (k === 'q') pressed.wpn = true; if (k === 'escape') { if (G.state === 'paused' && !$('pause').classList.contains('hidden')) resumeGame(); else pressed.pause = true; } }
   keys[k] = true; if ([' ', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright'].includes(k)) e.preventDefault();
 });
 window.addEventListener('keyup', e => { keys[e.key.toLowerCase()] = false; });
 window.addEventListener('blur', () => { for (const k in keys) keys[k] = false; if (G.state === 'play') pauseGame(); });
 document.addEventListener('visibilitychange', () => { if (document.hidden && G.state === 'play') pauseGame(); });
 const kDown = (...ks) => ks.some(k => keys[k]);
-const fireHeld = () => btn.fire.down || keys[' '];
-const runHeld = () => btn.run.down || keys['shift'];
+const fireHeld = () => btn.fire.down || mouse.fire || keys['k'] || (keys[' '] && !player.car && !player.jet);
+const runHeld = () => btn.run.down || keys['shift'] || (keys[' '] && (!!player.car || !!player.jet));
 
 // ================================================================ camera
 const cam = { x: 0, y: 0, z: 1 };
@@ -1415,7 +1488,7 @@ function updateMission(dt) {
 
 // ================================================================ shops
 function openShop(kind) {
-  G.state = 'shop'; muteLoops();
+  G.state = 'shop'; muteLoops(); unlockMouse();
   const el = document.getElementById('shopItems'); el.innerHTML = '';
   const title = document.getElementById('shopTitle');
   const items = [];
@@ -1440,7 +1513,7 @@ function openShop(kind) {
   }
   document.getElementById('shop').classList.remove('hidden');
 }
-function closeShop() { document.getElementById('shop').classList.add('hidden'); G.state = 'play'; last = performance.now(); }
+function closeShop() { document.getElementById('shop').classList.add('hidden'); G.state = 'play'; last = performance.now(); tryLock(); }
 document.getElementById('shopClose').onclick = closeShop;
 
 // ================================================================ world population
@@ -1576,8 +1649,9 @@ function findAimTarget(x, y, a, range, cone) {
 function shoot() {
   const w = player.weapon;
   const ox = player.car ? player.car.x : player.x, oy = player.car ? player.car.y : player.y;
-  if (!player.car && !player.moving) player.a = camYaw;
-  let a = player.car ? player.car.a : player.a;
+  const kbm = inputMode === 'kbm';
+  if (!player.car && (!player.moving || kbm)) player.a = camYaw;
+  let a = player.car ? (kbm ? camYaw : player.car.a) : player.a;
   player.aimT = 1.2;
   if (w === 0) { // fists
     if (player.car) return;
@@ -1590,7 +1664,7 @@ function shoot() {
   const ammoKey = w === 1 ? 'ammo' : 'smgAmmo';
   if (G[ammoKey] <= 0 && !G.cheat.ammo) { msg('Out of ammo!', 1.2); player.weapon = 0; G.fireCd = .3; return; }
   if (!G.cheat.ammo) G[ammoKey]--;
-  const t = findAimTarget(ox, oy, a, 420, player.car ? Math.PI : 1.05);
+  const t = findAimTarget(ox, oy, a, 420, kbm ? (player.car ? .6 : mouse.aim ? .16 : .4) : player.car ? Math.PI : 1.05);
   if (t) a = Math.atan2(t.y - oy, t.x - ox);
   if (!player.car) player.a = a;
   const spread = w === 2 ? .09 : .04;
@@ -1656,7 +1730,7 @@ function updatePlayer(dt) {
     const mx = co * -iy - si * ix, my = si * -iy + co * ix;
     const sp = (player.jet ? 175 : player.para ? 60 : runHeld() ? 108 : 52) * m;
     player.moving = m > 0;
-    if (m > 0) { player.x += mx * sp * dt; player.y += my * sp * dt; if (G.fireCd <= 0.05 || player.weapon === 0) player.a = Math.atan2(my, mx); player.anim += dt * sp * (runHeld() ? .2 : .26); }
+    if (m > 0) { player.x += mx * sp * dt; player.y += my * sp * dt; if (inputMode === 'kbm' && (mouse.aim || fireHeld())) player.a = camYaw; else if (G.fireCd <= 0.05 || player.weapon === 0) player.a = Math.atan2(my, mx); player.anim += dt * sp * (runHeld() ? .2 : .26); }
     playerVertical(dt);
     collideWorld(player, 9, player.z);
     // push out of cars
@@ -1920,7 +1994,7 @@ function step(dt) {
   if (c) {
     const sp = Math.hypot(c.vx, c.vy);
     if (camDragT <= 0) camYaw += angDiff(c.a, camYaw) * Math.min(1, dt * (2.2 + sp / 220));
-  } else if (player.moving && camDragT <= 0) {
+  } else if (player.moving && camDragT <= 0 && !mouse.locked) {
     const d = angDiff(player.a, camYaw); if (Math.abs(d) < 2.3) camYaw += d * Math.min(1, dt * 1.6);
   }
   cam.x = c ? c.x : player.x; cam.y = c ? c.y : player.y;
@@ -1932,7 +2006,7 @@ let texNoise = null, waterMesh = null, matGlass = null;
 let R3 = null, scene, cam3, hemi, sun, sky, skyMat, envScene, pmrem, envRT = null, lastEnvKey = -1;
 let matGround, matWater, matLamp, matCone, matShadow, matCar, carRM, smokeMesh, fireMesh, decalMesh, skidMesh, bulletMesh, lampGlow, lampPools, glowTex, waterNormal;
 const bldMats = {};
-let focusY = 0, camYaw = Math.PI / 2, camDragT = 0, frameNo = 0, nightF = 0, rLast = 0;
+let focusY = 0, camPitch = 0, camYaw = Math.PI / 2, camDragT = 0, frameNo = 0, nightF = 0, rLast = 0;
 const QUAL = { high: true };
 try { QUAL.high = localStorage.getItem('neoncoast.gfx') !== 'low'; } catch (e) { }
 const tmpM = new THREE.Matrix4(), tmpQ = new THREE.Quaternion(), tmpP = new THREE.Vector3(), tmpS = new THREE.Vector3(), tmpC = new THREE.Color(), UPV = new THREE.Vector3(0, 1, 0);
@@ -3066,8 +3140,11 @@ function placeCamera(menu) {
     const fx = c ? c.x : player.x, fy = c ? c.y : player.y, fly = c && c.T.fly;
     const fh = (c ? (fly ? c.z : groundH(fx, fy)) : (player.z || groundH(fx, fy))) + (c ? (fly === 'plane' ? 18 : 16) : 14.5);
     const sp = c ? Math.hypot(c.vx, c.vy) : 0;
-    const D = fly === 'plane' ? 150 + sp * .05 : fly === 'heli' ? 115 + sp * .04 : c ? 92 + sp * .045 : player.jet || player.para ? 62 : 44;
-    const Hh = fly === 'plane' ? 40 : fly === 'heli' ? 40 : c ? 34 : player.jet || player.para ? 24 : 18;
+    let D = fly === 'plane' ? 150 + sp * .05 : fly === 'heli' ? 115 + sp * .04 : c ? 92 + sp * .045 : player.jet || player.para ? 62 : 44;
+    let Hh = fly === 'plane' ? 40 : fly === 'heli' ? 40 : c ? 34 : player.jet || player.para ? 24 : 18;
+    const aiming = !c && mouse.aim && inputMode === 'kbm';
+    if (aiming) { D = 24; Hh = 5; }
+    Hh += camPitch * D * .9;
     const co = Math.cos(camYaw), si = Math.sin(camYaw);
     let d = D;
     for (let t = 8; t <= D; t += 5) {
@@ -3075,13 +3152,14 @@ function placeCamera(menu) {
       if (heightAt(x, y) > fh + Hh * t / D - 2 || groundH(x, y) > fh + Hh * t / D - 4) { d = Math.max(10, t - 7); break; }
     }
     const sx = G.shake ? rnd(-G.shake, G.shake) * .6 : 0, sy = G.shake ? rnd(-G.shake, G.shake) * .6 : 0;
-    cam3.position.set(fx - co * d + sx, fh + Hh * d / D + 2 + sy, fy - si * d);
+    const sh = aiming ? 8 : 0;
+    cam3.position.set(fx - co * d - si * sh + sx, fh + Hh * d / D + 2 + sy, fy - si * d + co * sh);
     cam3.position.y = Math.max(cam3.position.y, groundH(cam3.position.x, cam3.position.z) + 5);
     { const k = 1 + Math.max(0, cam3.position.y - 100) / 230; scene.fog.near *= k; scene.fog.far *= k; }
-    cam3.lookAt(fx + co * 26, fh + (c ? 2 : 3) + (fly ? clamp((c.vz || 0) * .12, -40, 40) : 0), fy + si * 26);
+    cam3.lookAt(fx + co * (aiming ? 80 : 26) - si * sh, fh + (c ? 2 : 3) + (fly ? clamp((c.vz || 0) * .12, -40, 40) : 0) - camPitch * (aiming ? 30 : 8), fy + si * (aiming ? 80 : 26) + co * sh);
     const alt = cam3.position.y - groundH(cam3.position.x, cam3.position.z);
     cam3.near = clamp(2.5 + alt / 120, 2.5, 30); cam3.far = clamp(9000 + alt * 8, 9000, 45000);
-    cam3.fov = 62 + (c ? clamp(sp / 40, 0, 12) : 0); cam3.updateProjectionMatrix();
+    cam3.fov = (aiming ? 48 : 62) + (c ? clamp(sp / 40, 0, 12) : 0); cam3.updateProjectionMatrix();
     focusY = fh - 16;
   }
   sky.position.copy(cam3.position);
@@ -3297,20 +3375,38 @@ function drawHUD() {
   if (player.hurtT > 0) { ctx.fillStyle = `rgba(255,0,0,${player.hurtT * .5})`; ctx.fillRect(0, 0, W, H); }
 
   // context hint
-  if (!player.car && G.state === 'play') { const c = nearestEnterable(player.x, player.y, 52); if (c) hudText((isTouch ? 'Tap CAR to ' : 'Press E to ') + (c.driver && c.ai !== 'none' ? 'jack' : 'enter'), W / 2, H * .62, 14, '#9ecbff', 'center'); }
+  if (!player.car && G.state === 'play') { const c = nearestEnterable(player.x, player.y, 52); if (c) hudText((inputMode === 'touch' ? 'Tap CAR to ' : 'Press F to ') + (c.driver && c.ai !== 'none' ? 'jack' : 'enter'), W / 2, H * .62, 14, '#9ecbff', 'center'); }
 
+  // laptop: crosshair, mouse prompt, key card
+  if (inputMode === 'kbm' && G.state === 'play') {
+    if (!player.car || mouse.aim) {
+      const cx = W / 2, cy = mouse.aim && !player.car ? H / 2 : H / 2 + 10;
+      ctx.strokeStyle = 'rgba(255,255,255,.9)'; ctx.lineWidth = 2;
+      ctx.beginPath(); for (const [a, b] of [[-1, 0], [1, 0], [0, -1], [0, 1]]) { ctx.moveTo(cx + a * 5, cy + b * 5); ctx.lineTo(cx + a * 11, cy + b * 11); } ctx.stroke();
+      ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(cx, cy, 1.6, 0, TAU); ctx.fill();
+    }
+    if (!mouse.locked) hudText(mouse.lockFailed ? 'Drag with the mouse to look  ·  Left click to shoot' : 'Click the game to look around with the mouse', W / 2, H - 82, 14, '#ffe066', 'center', 700);
+    if (G.keysT > 0) {
+      G.keysT -= 1 / 60;
+      const lines = ['WASD  move / drive', 'Mouse  look  ·  Left click  shoot  ·  Right click  aim', 'Shift  sprint  ·  Space  handbrake / fly up  ·  C  fly down', 'F  enter / exit vehicle  ·  Q or wheel  weapon  ·  G  recruit', 'Tab  map  ·  Esc  pause, controls & cheats'];
+      ctx.globalAlpha = clamp(G.keysT, 0, 1);
+      ctx.fillStyle = 'rgba(10,8,30,.72)'; ctx.fillRect(12, H - 18 - lines.length * 19 - 10, 430, lines.length * 19 + 14);
+      lines.forEach((l, i) => hudText(l, 22, H - 18 - (lines.length - i) * 19 + 6, 13, i ? '#fff' : '#ffe066', 'left', 700));
+      ctx.globalAlpha = 1;
+    }
+  }
   // touch controls
   if (joy.active) {
     ctx.fillStyle = 'rgba(255,255,255,.1)'; ctx.strokeStyle = 'rgba(255,255,255,.35)'; ctx.lineWidth = 2;
     ctx.beginPath(); ctx.arc(joy.bx, joy.by, 60, 0, TAU); ctx.fill(); ctx.stroke();
     ctx.fillStyle = 'rgba(255,255,255,.45)'; ctx.beginPath(); ctx.arc(joy.bx + joy.vx * 60, joy.by + joy.vy * 60, 26, 0, TAU); ctx.fill();
-  } else if (isTouch) {
+  } else if (inputMode === 'touch') {
     ctx.globalAlpha = .35; ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(pad + 80, H - 100, 52, 0, TAU); ctx.stroke();
     hudText('MOVE', pad + 80, H - 100, 12, '#fff', 'center'); ctx.globalAlpha = 1;
   }
   for (const k in btn) {
     const b = btn[k];
-    if (b.hidden || (!isTouch && k !== 'pause' && k !== 'gang')) continue;
+    if (b.hidden || (inputMode !== 'touch' && k !== 'pause' && k !== 'gang')) continue;
     ctx.globalAlpha = b.down ? .85 : .55;
     ctx.fillStyle = k === 'pause' ? 'rgba(0,0,0,.35)' : b.col; ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, TAU); ctx.fill();
     ctx.strokeStyle = 'rgba(255,255,255,.8)'; ctx.lineWidth = 2; ctx.stroke();
@@ -3318,19 +3414,20 @@ function drawHUD() {
     const fm = player.car && player.car.T.fly ? player.car.T.fly : (player.jet ? 'heli' : null);
     let lb = b.label; if (k === 'run' && player.car) lb = 'BRAKE'; if (k === 'car' && player.car) lb = 'EXIT';
     if (fm && k === 'run') lb = fm === 'plane' ? 'BOOST' : 'UP'; if (fm && k === 'wpn') lb = fm === 'plane' ? 'SLOW' : 'DOWN';
-    if (k === 'gang' && !isTouch) lb += ' (G)'; if (k === 'fire' && player.weapon === 0 && !player.car) lb = 'PUNCH';
+    if (k === 'gang' && inputMode !== 'touch') lb += ' (G)'; if (k === 'fire' && player.weapon === 0 && !player.car) lb = 'PUNCH';
     hudText(lb, b.x, b.y, Math.max(10, b.r * .38), '#fff', 'center');
   }
 }
 const isTouch = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
+inputMode = isTouch && !window.matchMedia('(pointer: fine)').matches ? 'touch' : 'kbm';
 
 let menuT = 0;
 
 // ================================================================ flow
 const $ = id => document.getElementById(id);
 function muteLoops() { if (AU.engG) { AU.engG.gain.value = 0; AU.sirG.gain.value = 0; } }
-function pauseGame() { if (G.state !== 'play') return; G.state = 'paused'; muteLoops(); $('pause').classList.remove('hidden'); save(); }
-function resumeGame() { $('pause').classList.add('hidden'); G.state = 'play'; last = performance.now(); }
+function pauseGame() { if (G.state !== 'play') return; G.state = 'paused'; muteLoops(); unlockMouse(); $('pause').classList.remove('hidden'); save(); }
+function resumeGame() { $('pause').classList.add('hidden'); $('controls').classList.add('hidden'); G.state = 'play'; last = performance.now(); tryLock(); }
 function newWorldState(fresh) {
   cars = []; peds = []; bullets = []; parts = []; pickups = []; skids = [];
   for (const s of parkSpots) s.used = false;
@@ -3358,13 +3455,20 @@ function startGame(fresh) {
   G.state = 'play'; last = performance.now();
   big('NEON COAST', '#ff4f9a', 2.2);
   msg('Walk into a green $ marker to start a job.', 5);
-  try { const el = document.documentElement; if (isTouch && el.requestFullscreen) el.requestFullscreen({ navigationUI: 'hide' }).then(() => { try { screen.orientation.lock('landscape').catch(() => { }); } catch (e) { } }).catch(() => { }); } catch (e) { }
+  G.keysT = inputMode === 'kbm' ? 14 : 0;
+  try { const el = document.documentElement; if (inputMode === 'touch' && el.requestFullscreen) el.requestFullscreen({ navigationUI: 'hide' }).then(() => { try { screen.orientation.lock('landscape').catch(() => { }); } catch (e) { } }).catch(() => { }); } catch (e) { }
 }
-$('btnPlay').onclick = () => startGame(false);
+$('btnPlay').onclick = () => { startGame(false); tryLock(); };
 $('btnNew').onclick = () => { const b = $('btnNew'); if (b.dataset.armed) { delete b.dataset.armed; b.textContent = 'New game'; startGame(true); } else { b.dataset.armed = '1'; b.textContent = 'Tap again to wipe save'; setTimeout(() => { delete b.dataset.armed; b.textContent = 'New game'; }, 3000); } };
 $('btnResume').onclick = resumeGame;
 $('btnSound').onclick = () => setSound(!AU.on);
 $('btnGfx').onclick = () => setQuality(!QUAL.high);
+$('btnControls').onclick = () => { $('pause').classList.add('hidden'); $('controls').classList.remove('hidden'); $('sens').value = mouse.sens; };
+$('ctrlBack').onclick = () => { $('controls').classList.add('hidden'); $('pause').classList.remove('hidden'); };
+$('sens').oninput = e => { mouse.sens = +e.target.value; try { localStorage.setItem('neoncoast.sens', mouse.sens); } catch (er) { } };
+const fsLabel = () => { $('btnFull').textContent = document.fullscreenElement ? 'Exit fullscreen' : 'Fullscreen'; };
+$('btnFull').onclick = () => { try { const r = document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen(); if (r && r.then) r.then(fsLabel, () => { $('btnFull').textContent = 'Fullscreen not available here'; }); } catch (e) { $('btnFull').textContent = 'Fullscreen not available here'; } };
+document.addEventListener('fullscreenchange', fsLabel);
 $('btnCheats').onclick = () => { $('pause').classList.add('hidden'); $('cheats').classList.remove('hidden'); $('cheatMsg').textContent = ''; $('cheatInput').value = ''; };
 $('cheatBack').onclick = () => { $('cheats').classList.add('hidden'); $('pause').classList.remove('hidden'); };
 const tryCheat = code => { const r = runCheat(code); $('cheatMsg').textContent = r ? 'Activated: ' + r : 'Unknown code'; $('cheatMsg').style.color = r ? '#7dffb0' : '#ff8a8a'; };
@@ -3372,7 +3476,7 @@ $('cheatGo').onclick = () => { tryCheat($('cheatInput').value); $('cheatInput').
 $('cheatInput').addEventListener('keydown', e => { if (e.key === 'Enter') { tryCheat(e.target.value); e.target.value = ''; } });
 $('cheatShow').onclick = () => { const l = $('cheatList'); l.classList.toggle('hidden'); $('cheatShow').textContent = l.classList.contains('hidden') ? 'Show code list' : 'Hide code list'; };
 for (const [code, desc] of CHEATS) { const b = document.createElement('button'); b.innerHTML = '<b>' + code + '</b>' + desc; b.onclick = () => tryCheat(code); $('cheatList').appendChild(b); }
-$('btnQuit').onclick = () => { save(); $('pause').classList.add('hidden'); $('menu').classList.remove('hidden'); G.state = 'menu'; muteLoops(); };
+$('btnQuit').onclick = () => { unlockMouse(); save(); $('pause').classList.add('hidden'); $('menu').classList.remove('hidden'); G.state = 'menu'; muteLoops(); };
 if (load()) $('btnPlay').textContent = 'CONTINUE'; else $('btnNew').classList.add('hidden');
 
 genWorld();
@@ -3381,7 +3485,7 @@ buildMinimap();
 resize();
 init3D();
 requestAnimationFrame(frame);
-window.__NC = { G, player, places, startGame, get roads() { return roads; }, summit, AIRF, TOWN, makeCar: (...a) => makeCar(...a), cheat: c => runCheat(c), setYaw: v => { camYaw = v; camDragT = 99; }, get scene() { return scene; }, get R3() { return R3; }, get cars() { return cars; }, get peds() { return peds; } };
+window.__NC = { G, player, places, startGame, get inputMode() { return inputMode; }, mouse, get roads() { return roads; }, summit, AIRF, TOWN, makeCar: (...a) => makeCar(...a), cheat: c => runCheat(c), setYaw: v => { camYaw = v; camDragT = 99; }, get scene() { return scene; }, get R3() { return R3; }, get cars() { return cars; }, get peds() { return peds; } };
 
 if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
   window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => { }));
