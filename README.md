@@ -23,7 +23,9 @@ The game picks the right layout automatically: touch buttons on phones and table
 | Enter / exit vehicle | F or E | CAR |
 | Switch weapon | Q or mouse wheel | ⇄ |
 | Fly up / down | Space / C | UP / DOWN |
-| Recruit / dismiss crew | G | RECRUIT |
+| Recruit crew · talk to people | G | RECRUIT / TALK |
+| Play a casino table | F | PLAY |
+| Next line of dialogue | Click, Space or Enter | Tap |
 | Map | Tab | Tap minimap |
 | Pause | Esc | II |
 | Cheats | Type a code any time | Pause → Cheats |
@@ -35,6 +37,11 @@ The game picks the right layout automatically: touch buttons on phones and table
 - Traffic AI, pedestrians, parked cars, carjacking, crashes, fires and explosions
 - 5-star wanted system: patrols, pursuits, foot cops, busted / wasted, Respray garage
 - Huge world: 14×14-block city, desert, the town of Pine Hollow, an airfield with runway, hangars, a parked plane and helicopters, and mountain countryside: ridged peaks with rock and snow, pine forests, coastline, a winding mountain highway with guard rails, a radio tower on the summit, off-road driving with slope physics
+- **Story campaign** (9 missions with dialogue): Mama Lu, Benny, Detective Hale and casino owner Isla Moreno help Dex take the coast back from Victor Kane's Vipers. Walk into the gold ★ marker to start the next mission; progress is saved.
+- **Neon Palace casino**: walk inside a 3D casino and play **Baccarat** (official Punto Banco third-card rules, Banker pays 0.95:1, Tie 8:1), **Blackjack** (3:2, dealer stands on 17, double down) and **Slots** (≈92% payback). There's a bar too. In-game money only.
+- **Dating**: meet Sofia, Jade, Maya and Luna around the map (pink ♥). Talk (G / TALK), choose what to say, and take them on dates; drive carefully — cops and crashes ruin the mood. At full affection they become your girlfriend and help you once a day.
+- **Boats & island**: speedboats at the pier east of downtown; ride to the island (beaches, palms, umbrellas, Beach Club, villa, its own pier). You can swim, too.
+- **Weather**: random rain showers (wet, reflective streets).
 - Gangs: your green Palms crew and the rival purple Vipers each hold turf. Recruit up to four Palms; they follow you, fight, ride in your car or helicopter and shoot out of the windows. Vipers attack in their turf.
 - Flying: helicopter, stunt plane, rocket backpack, automatic parachute when you bail out mid-air; land on rooftops
 - Driving: speed-sensitive steering and extra grip for stable high-speed handling
@@ -67,3 +74,21 @@ Type a code on the keyboard at any time, or open **Pause → Cheats** to type or
 | JETSTREAM | Fly a stunt plane (starts in the air) |
 | CREWUP | Three Palms gang members join you |
 | AIRFIELD / PINEHOLLOW | Teleport to the airfield / Pine Hollow |
+| GOLDRUSH | +$1,000,000 |
+| SPEEDBOAT | Spawn a speedboat on nearby water (or at the pier) |
+| PARADISE / HIGHROLLER | Teleport to the island / the Neon Palace |
+| LUCKYSTREAK | Win your next 3 casino rounds |
+| CHARMER | Everyone you date adores you |
+| STORMY / SUNSHINE | Rain / clear skies |
+| PINKRIDE | Spawn a pink Vento S |
+| TIMEWARP | Skip ahead 6 hours |
+| STORYSKIP | Complete the current story mission |
+
+## Tests
+- `node tests/casino-rules.test.js`: 106 checks of the baccarat tableau, payouts, blackjack settlement and slot payback, including a 2-million-hand simulation compared against published baccarat odds. No dependencies.
+- `node tests/e2e.js [screenshotDir]`: end-to-end playthrough in headless Chromium (all 9 story missions, casino games, boat, dating, cheats, save/reload). Needs Playwright and `python3 -m http.server 8765` running in this folder.
+
+See `AUDIT.md` for the final review.
+
+## Credits
+Rendering uses [three.js](https://threejs.org) r128 (MIT License, © 2010–2021 three.js authors), bundled as `three.min.js`.
