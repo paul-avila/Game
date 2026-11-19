@@ -10,7 +10,7 @@ Scope: everything in this repository (`index.html` game, `sw.js` offline cache, 
 | Casino rules | `tests/casino-rules.test.js` (106 assertions) | **All pass** |
 | Baccarat odds | 2,000,000 simulated 8-deck hands vs published odds | Banker 45.83% / Player 44.66% / Tie 9.52% (published 45.86 / 44.62 / 9.52); house edge Banker 1.12%, Player 1.17% (published 1.06 / 1.24, within simulation noise) |
 | Slots payback | Exact calculation from reel weights | 91.75% |
-| Full playthrough | `tests/e2e.js` (headless Chromium, laptop layout) | **78/78 pass** (after v10.2) |
+| Full playthrough | `tests/e2e.js` (headless Chromium, laptop layout) | **85/85 pass** (after v10.5) |
 | Phone layout | Playwright Pixel 7 emulation | touch buttons, joystick, TALK/PLAY context button, dialogue taps |
 | Content and safety | Source search | see "Safety and content" below |
 
@@ -81,6 +81,13 @@ Player report: cars still too fast and hard to control at speed. Measured with a
 | Braking 100 → 0 km/h, Vento S / sedan | 0.35 s / 0.6 s | 1.1 s / 1.2 s |
 
 Changes: lower top speeds by model (van 90 → Vento S 180 km/h); acceleration tapers toward top speed; much lower drag under throttle, so each car still reaches its top speed; brakes the same for every model and no longer violent; speed-sensitive steering lock and slower turn-in at speed for the player, with a quick return to centre; phone joystick has a dead zone and a finer response near the centre; softer wall bounces.
+
+## v10.4–v10.5
+
+- **Viper turf mission was unclear** (player report): the objective only said "Take out Vipers in their turf" and pointed at a yellow circle that did nothing. Now it says "Shoot Vipers (purple clothes, red arrows)", red arrows and map dots mark every Viper, the guide points to the nearest one, and Vipers keep appearing nearby during the mission.
+- **Could not fire while aiming with right click** (player report). Root cause: browsers don't send a new pointerdown for a second mouse button while one is held; the change arrives as pointermove with `button >= 0`. The game now reads the button mask on those events (ignoring ordinary moves, `button = -1`). e2e: right-hold + left-press gives aim and fire.
+- **Bikes**: bicycle, scooter, adventure bike, sports bike, with visible riders (2-bone reach to the bars and pegs or pedals), helmets, lean in turns and being thrown off in hard crashes. e2e: each can be ridden, and crashing throws you off.
+- **Found while testing**: fixed vehicles (the Pine Hollow Vento GT and the new bikes) could be placed inside a building; placements now look for a clear spot.
 
 ## Safety and content
 

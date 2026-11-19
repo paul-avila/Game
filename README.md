@@ -46,6 +46,7 @@ The game picks the right layout automatically: touch buttons on phones and table
 - Traffic AI, pedestrians, parked cars, carjacking, crashes, fires and explosions
 - 5-star wanted system: patrols, pursuits, foot cops, busted / wasted, Respray garage. At 3 stars a **police helicopter** joins the chase (two at 5 stars): it circles overhead, a cop shoots from the door, and at night it lights you up with a searchlight. Shoot it down (rifle, sniper or rocket launcher) or outrun it.
 - **Weapons**: fists, pistol, SMG, shotgun, assault rifle, sniper rifle (zoom scope), rocket launcher (explodes cars, people and helicopters). Buy them at the gun store (orange marker).
+- **Bikes**: bicycle (35 km/h), scooter (60), adventure bike (140, rides off-road without slowing) and sports bike (175). You can see your rider: pedalling, upright on the scooter, crouched on the sports bike; motorbike riders wear helmets and bikes lean into turns. Hit something hard and you're thrown off. Find them parked around the cities and in traffic, by the Safehouse, in Pine Hollow and outside the Neon Palace, or spawn them with cheats.
 - **Car speeds by model** (top speed shows when you get in): van 90 km/h, sedan/taxi 115, police 145, coupe 150, Vento GT 165, Vento S 180. Acceleration builds gradually, steering gets calmer the faster you go, and brakes are strong but smooth. NITROUS makes cars faster if you want more speed.
 - **Connected cities**: the highway loop links Neon Coast to Pine Hollow and three new cities: **Sunset Bluffs** (southwest, near the coast), **Copper Ridge** (west) and **Northgate** (north). Each has a street grid, downtown towers, shops, homes, parked cars and pedestrians, and a sign and on-screen name as you arrive.
 - Huge world: 14×14-block city, desert, the town of Pine Hollow, an airfield with runway, hangars, a parked plane and helicopters, and mountain countryside: ridged peaks with rock and snow, pine forests, coastline, a winding mountain highway with guard rails, a radio tower on the summit, off-road driving with slope physics
@@ -76,6 +77,7 @@ Type a code on the keyboard at any time, or open **Pause → Cheats** to type or
 | MOSTWANTED | Five-star wanted level |
 | GHOSTMODE | Police ignore you (toggle) |
 | ROSSO / GRANDTOUR | Spawn a Vento S / Vento GT supercar |
+| PEDALS / SCOOTY / DIRTTRAIL / SUPERBIKE | Spawn a bicycle / scooter / adventure bike / sports bike |
 | SIRENS / YELLOWCAB | Spawn a police cruiser / taxi |
 | NITROUS | Faster cars (toggle) |
 | BIGBANG | Blow up all nearby cars |

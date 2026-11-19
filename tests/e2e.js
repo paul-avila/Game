@@ -224,6 +224,25 @@ const check = (name, cond, info = '') => { results.push([cond ? 'PASS' : 'FAIL',
   for (let k = 0; k < 12 && !(await E(() => window.__h.hp <= 0)); k++) { await E(() => { const h = window.__h, P = __NC.player; P.a = Math.atan2(h.y - P.y, h.x - P.x); __NC.setYaw(P.a); __NC.G.fireCd = 0; __NC.shoot(); }); await wait(300); }
   check('the helicopter can be shot down', await E(() => window.__h.hp <= 0 || window.__h.ai !== 'copheli'));
   await E(() => { __NC.cheat('CLEANRECORD'); });
+  // ---- v10.5: bikes, aiming while firing
+  const bikeTops = await E(() => ['bicycle', 'scooter', 'adventure', 'sportbike'].map(k => Math.round(__NC.CARTYPES[k].max * .35)));
+  check('bike top speeds: bicycle < scooter < adventure < sports', bikeTops.every((v, i) => !i || v > bikeTops[i - 1]), bikeTops.join(' < '));
+  for (const [code, type] of [['PEDALS', 'bicycle'], ['SCOOTY', 'scooter'], ['DIRTTRAIL', 'adventure'], ['SUPERBIKE', 'sportbike']]) {
+    await E(() => __NC.cheat('HOMEBASE')); await wait(200);
+    await p.evaluate(c => __NC.cheat(c), code); await wait(300);
+    const rode = await p.evaluate(t => { const P = __NC.player, c = __NC.cars.filter(q => q.type === t && !q.dead).sort((a, b) => Math.hypot(a.x - P.x, a.y - P.y) - Math.hypot(b.x - P.x, b.y - P.y))[0]; if (!c) return false; __NC.enterCar(c); return __NC.player.car === c; }, type);
+    await p.keyboard.down('w'); const moving = rode && await until(() => !!__NC.player.car && Math.hypot(__NC.player.car.vx, __NC.player.car.vy) > 5, 8000); await p.keyboard.up('w');
+    check('ride the ' + type, moving);
+    await E(() => { const c = __NC.player.car; if (c) { c.vx = c.vy = 0; } }); await p.keyboard.press('f'); await wait(250);
+  }
+  await E(() => { const P = __NC.player; let sx = 0, sy = 0; outer: for (let y = 200; y < 6000; y += 37) for (let x = 100; x < 6000; x += 5) { if (__NC.roofAt(x, y) > 0) { let free = true; for (let d = 10; d <= 120; d += 10) if (__NC.roofAt(x - d, y) > 0) free = false; if (free) { sx = x - 110; sy = y; break outer; } } } P.x = sx; P.y = sy; const c = __NC.makeCar('sportbike', sx, sy, 0, { persist: true }); __NC.enterCar(c); c.x = sx; c.y = sy; c.a = 0; c.vx = 480; c.vy = 0; });
+  check('crashing a bike into a wall throws you off', await until(() => !__NC.player.car, 8000));
+  await until(() => !(__NC.player.knockT > 0), 8000);
+  await p.mouse.click(640, 360); await wait(300);
+  await p.mouse.down({ button: 'right' }); await wait(200); await p.mouse.down({ button: 'left' }); await wait(200);
+  const af = await E(() => ({ aim: __NC.mouse.aim, fire: __NC.mouse.fire, locked: __NC.mouse.locked }));
+  await p.mouse.up({ button: 'left' }); await p.mouse.up({ button: 'right' }); await wait(200);
+  check('left click fires while right click aims', af.aim && af.fire, JSON.stringify(af));
   // ---- Save / reload persistence
   await E(() => { __NC.G.saveT = 99; }); await wait(1200);
   const before = await E(() => ({ story: __NC.G.storyIdx, cash: Math.floor(__NC.G.cash) }));

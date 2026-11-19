@@ -577,7 +577,7 @@ function mapClick(cx, cy) {
 }
 
 // ================================================================ entities
-const CARNAME = { sedan: 'Sedan', sport: 'Coupe', van: 'Van', taxi: 'Taxi', police: 'Police cruiser', super: 'Vento S (mid-engine supercar)', gt: 'Vento GT (grand tourer)', heli: 'Helicopter: hold UP to lift off', boat: 'Speedboat', plane: 'Stunt plane: push forward to take off' };
+const CARNAME = { sedan: 'Sedan', sport: 'Coupe', van: 'Van', taxi: 'Taxi', police: 'Police cruiser', super: 'Vento S (mid-engine supercar)', gt: 'Vento GT (grand tourer)', heli: 'Helicopter: hold UP to lift off', boat: 'Speedboat', plane: 'Stunt plane: push forward to take off', bicycle: 'Bicycle', scooter: 'Scooter', adventure: 'Adventure bike (goes off-road)', sportbike: 'Sports bike' };
 const CARTYPES = {
   sedan: { len: 44, wid: 22, max: 329, acc: 110, grip: 7, turn: 2.6, hp: 100, cols: ['#d94040', '#3d7bd9', '#e0e0e0', '#2c2c34', '#3aa66b', '#c9a227', '#8e44ad', '#e67e22'] },
   sport: { len: 46, wid: 22, max: 429, acc: 142, grip: 8, turn: 2.9, hp: 80, cols: ['#ff2d6f', '#ffd400', '#00d0ff', '#ff7a00', '#f2f2f2'] },
@@ -588,6 +588,10 @@ const CARTYPES = {
   boat: { len: 46, wid: 18, max: 343, acc: 150, grip: 1.7, turn: 2.2, hp: 140, boat: true, cols: ['#f4f4f4', '#c8101e', '#1d3f8f', '#111111'] },
   heli: { len: 50, wid: 16, max: 440, acc: 300, grip: 3, turn: 1.9, hp: 160, fly: 'heli', cols: ['#1d1d22', '#c8101e', '#f4f4f4', '#1d3f8f'] },
   plane: { len: 70, wid: 18, max: 920, acc: 240, grip: 3, turn: 1.2, hp: 120, fly: 'plane', cols: ['#c8101e', '#f4f4f4', '#f5c400'] },
+  bicycle: { len: 22, wid: 7, max: 100, acc: 55, grip: 9, turn: 3.4, hp: 40, bike: 'bicycle', cols: ['#d94a3d', '#1f8a8a', '#f1c40f', '#222222', '#f4f4f4', '#3498db'] },
+  scooter: { len: 23, wid: 8, max: 171, acc: 80, grip: 8.5, turn: 3.2, hp: 60, bike: 'scooter', pitch: 1.6, cols: ['#8fd3c7', '#f4f4f4', '#ff6fb5', '#f1c40f', '#c8101e', '#2c3e66'] },
+  adventure: { len: 26, wid: 9, max: 400, acc: 140, grip: 8, turn: 2.9, hp: 90, bike: 'adventure', offroad: true, pitch: 1.1, cols: ['#f28c28', '#f4f4f4', '#2c3e50', '#c0392b', '#556b2f'] },
+  sportbike: { len: 25, wid: 8, max: 500, acc: 175, grip: 9, turn: 3.0, hp: 70, bike: 'sport', pitch: 1.5, cols: ['#c8101e', '#1d3f8f', '#111111', '#f5c400', '#2e7d32', '#f4f4f4'] },
   gt: { len: 48, wid: 22.5, max: 471, acc: 148, grip: 8.8, turn: 2.8, hp: 100, pitch: 1.22, cols: ['#c8101e', '#c8101e', '#7a0d12', '#1b1b1b', '#c0c4c8', '#0e3b2e'] },
 };
 let cars = [], peds = [], bullets = [], parts = [], pickups = [], skids = [];
@@ -601,6 +605,7 @@ function makeCar(type, x, y, a, opts = {}) {
   }, opts);
   if (T.fly && c.z === undefined) c.z = groundH(x, y);
   if (T.boat) c.z = -3;
+  c.cruise = Math.min(c.cruise, T.max * .9); // a scooter in traffic can't cruise faster than it goes
   cars.push(c);
   return c;
 }
@@ -614,7 +619,7 @@ function spawnTrafficCar(near, minD, maxD, opts = {}) {
     else { const iy = Math.round(y / CELL); dir = Math.random() < .5 ? 0 : 2; y = laneCoord(dir, 0, iy); if (nearLine(x) < HR + 20) continue; }
     if (cars.some(c => dist(c.x, c.y, x, y) < 90)) continue;
     const r = Math.random();
-    const type = opts.type || (r < .06 ? 'police' : r < .16 ? 'taxi' : r < .25 ? 'van' : r < .36 ? 'super' : r < .44 ? 'gt' : r < .52 ? 'sport' : 'sedan');
+    const type = opts.type || (r < .06 ? 'police' : r < .16 ? 'taxi' : r < .25 ? 'van' : r < .34 ? 'super' : r < .41 ? 'gt' : r < .48 ? 'sport' : r < .54 ? 'scooter' : r < .58 ? 'sportbike' : 'sedan');
     const c = makeCar(type, x, y, DANG[dir], Object.assign({ ai: 'rail', driver: true, dir }, opts));
     c.spd = c.cruise * .8; c.vx = DX[dir] * c.spd; c.vy = DY[dir] * c.spd;
     return c;
@@ -958,7 +963,7 @@ function spawnPathCar(near, minD, maxD, opts = {}) {
     if (d < minD || d > maxD) continue;
     if (cars.some(c => dist(c.x, c.y, p.x, p.y) < 120)) continue;
     const q = Math.random();
-    const type = opts.type || (q < .25 ? 'super' : q < .4 ? 'gt' : q < .55 ? 'van' : q < .7 ? 'sport' : 'sedan');
+    const type = opts.type || (q < .22 ? 'super' : q < .35 ? 'gt' : q < .5 ? 'van' : q < .63 ? 'sport' : q < .7 ? 'sportbike' : q < .76 ? 'adventure' : 'sedan');
     const c = makeCar(type, p.x, p.y, 0, Object.assign({ ai: 'path', driver: true, road: r, pi: i, pdir: Math.random() < .5 ? 1 : -1, cruise: rnd(190, 270) }, opts));
     c.spd = c.cruise * .8; updatePathCar(c, 0); c.a = c.pa;
     return c;
@@ -1000,6 +1005,10 @@ const CHEATS = [
   ['GRANDTOUR', 'Spawn a Vento GT'],
   ['SIRENS', 'Spawn a police cruiser'],
   ['YELLOWCAB', 'Spawn a taxi'],
+  ['PEDALS', 'Spawn a bicycle'],
+  ['SCOOTY', 'Spawn a scooter'],
+  ['SUPERBIKE', 'Spawn a sports bike'],
+  ['DIRTTRAIL', 'Spawn an adventure bike'],
   ['NITROUS', 'Faster cars (toggle)'],
   ['BIGBANG', 'Blow up all nearby cars'],
   ['SLOWMO', 'Slow motion (toggle)'],
@@ -1062,6 +1071,10 @@ function runCheat(code) {
     case 'MOSTWANTED': C.ghost = false; G.heat = 99; r = 'Five stars!'; break;
     case 'GHOSTMODE': r = tog('ghost', 'Police ignore you'); if (C.ghost) G.heat = 0; break;
     case 'ROSSO': spawnCheatCar('super', '#c8101e'); r = 'Vento S delivered'; break;
+    case 'PEDALS': spawnCheatCar('bicycle'); r = 'Bicycle delivered'; break;
+    case 'SCOOTY': spawnCheatCar('scooter'); r = 'Scooter delivered'; break;
+    case 'SUPERBIKE': spawnCheatCar('sportbike'); r = 'Sports bike delivered'; break;
+    case 'DIRTTRAIL': spawnCheatCar('adventure'); r = 'Adventure bike delivered'; break;
     case 'GRANDTOUR': spawnCheatCar('gt', '#c8101e'); r = 'Vento GT delivered'; break;
     case 'SIRENS': spawnCheatCar('police'); r = 'Police cruiser delivered'; break;
     case 'YELLOWCAB': spawnCheatCar('taxi'); r = 'Taxi delivered'; break;
@@ -1105,7 +1118,7 @@ function cheatKey(ch) {
 }
 
 // ================================================================ aircraft, rocket pack, parachute
-const SEATS = { super: 1, gt: 1, sport: 1, sedan: 3, taxi: 3, police: 3, van: 5, heli: 3, plane: 0, boat: 3 };
+const SEATS = { super: 1, gt: 1, sport: 1, sedan: 3, taxi: 3, police: 3, van: 5, heli: 3, plane: 0, boat: 3, bicycle: 0, scooter: 1, adventure: 1, sportbike: 1 };
 const airborne = () => player.z - floorAt(player.x, player.y, player.z) > 30;
 function flightInput() {
   const kx = (kDown('d', 'arrowright') ? 1 : 0) - (kDown('a', 'arrowleft') ? 1 : 0);
@@ -1915,7 +1928,7 @@ function updateAudio(dt) {
   const c = player.car, t = AU.ctx.currentTime;
   const sp = c ? Math.hypot(c.vx, c.vy) : 0;
   AU.eng.frequency.setTargetAtTime(c ? (45 + sp * .22) * (c.T.pitch || 1) : 40, t, .08);
-  AU.engG.gain.setTargetAtTime(c && G.state === 'play' ? .07 + sp / 6000 : 0, t, .1);
+  AU.engG.gain.setTargetAtTime(c && G.state === 'play' && c.T.bike !== 'bicycle' ? .07 + sp / 6000 : 0, t, .1);
   let near = 1e9; for (const k of cars) if (k.siren && !k.dead) near = Math.min(near, dist(k.x, k.y, player.x, player.y));
   const sv = G.state === 'play' && stars() > 0 ? clamp(1 - near / 900, 0, 1) * .05 : 0;
   AU.sir.frequency.setTargetAtTime((G.time % 1) < .5 ? 640 : 900, t, .02);
@@ -1986,6 +1999,8 @@ cv.addEventListener('pointerdown', e => {
 cv.addEventListener('pointermove', e => {
   if (G.bigMap) { mapPointerMove(e); return; }
   if (G.state === 'creator') { if (e.pointerId === look.id) { G.ccSpin = (G.ccSpin || 0) + (e.clientX - look.x) * .012; look.x = e.clientX; } return; }
+  // a second mouse button pressed/released while another is held arrives as pointermove with button >= 0 (no new pointerdown)
+  if (e.pointerType === 'mouse' && e.button >= 0 && (mouse.locked || mouse.lockFailed) && G.state === 'play') { mouse.fire = !!(e.buttons & 1); mouse.aim = !!(e.buttons & 2); }
   if (mouse.locked && e.pointerType === 'mouse') {
     if (Math.abs(e.movementX) > 250 || Math.abs(e.movementY) > 250) return; // ignore capture spikes
     const k = .00045 * mouse.sens;
@@ -2127,7 +2142,7 @@ function drivePhysics(c, thr, steer, hb, dt) {
   if (!inCityFoot(c.x, c.y) && !T.boat) {
     const sl = (groundH(c.x + ca * 10, c.y + sa * 10) - groundH(c.x - ca * 10, c.y - sa * 10)) / 20;
     fwd -= 170 * clamp(sl, -1.2, 1.2) * dt;
-    if (!onRoadNet(c.x, c.y)) { c.offroad = true; mult *= .75; fwd *= Math.exp(-.3 * dt); }
+    if (!onRoadNet(c.x, c.y) && !T.offroad) { c.offroad = true; mult *= .75; fwd *= Math.exp(-.3 * dt); }
   }
   const taper = 1 - .7 * Math.pow(clamp(Math.abs(fwd) / (T.max * mult * boost), 0, 1), 1.8);
   if (thr > 0) fwd += (fwd < 0 ? 380 : T.acc * taper * mult * boost * (boost > 1 ? 1.3 : 1)) * thr * dt;
@@ -2173,6 +2188,7 @@ function carWorldCollide(c) {
       if (vn < 0) { c.vx -= vn * n[0] * 1.2; c.vy -= vn * n[1] * 1.2; c.vx *= .96; c.vy *= .96; hitAny = Math.max(hitAny, -vn); }
     }
   }
+  if (c.T.bike && c === player.car && hitAny > 210) bailBike(hitAny);
   if (hitAny > 150) {
     sfx('crash', c.x, c.y); damageCar(c, (hitAny - 150) * .06, false);
     puff(c.x + Math.cos(c.a) * c.len * .5, c.y + Math.sin(c.a) * c.len * .5, 5, { cols: ['#ffd27a', '#fff'], s0: 40, s1: 140, l0: .1, l1: .3, r0: 1, r1: 2 });
@@ -2454,7 +2470,7 @@ function populate(dt) {
   // parked cars near
   if (Math.random() < .05 && cars.filter(c => c.parked).length < 25) for (const s of parkSpots) {
     if (s.used) continue; const d = dist(s.x, s.y, px, py);
-    if (d > 900 && d < 1500 && Math.random() < .5) { s.used = true; makeCar(pickR(['super', 'super', 'gt', 'sport', 'van', 'sedan', 'sedan']), s.x, s.y, s.a + (Math.random() < .5 ? 0 : Math.PI), { parked: true, spot: s }); }
+    if (d > 900 && d < 1500 && Math.random() < .5) { s.used = true; makeCar(pickR(['super', 'super', 'gt', 'sport', 'van', 'sedan', 'sedan', 'scooter', 'sportbike', 'bicycle', 'adventure']), s.x, s.y, s.a + (Math.random() < .5 ? 0 : Math.PI), { parked: true, spot: s }); }
   }
   for (const s of parkSpots) if (s.used && dist(s.x, s.y, px, py) > 2700) s.used = false;
   // peds
@@ -2507,6 +2523,11 @@ function enterCar(c) {
   c.parked = false; c.ai = 'player'; c.driver = true; c.siren = false;
   if (c.type === 'police' && !c.used) { c.used = true; G.am.pistol = (G.am.pistol || 0) + 20; msg('Found 20 pistol rounds in the cruiser.'); }
   player.car = c; c.crew = c.crew || []; sfx('door'); msg((CARNAME[c.type] || '') + (c.T.fly ? '' : ' · top speed ' + Math.round(c.T.max * .35) + ' km/h'), 2.2);
+}
+function bailBike(imp) {
+  const c = player.car; if (!c || !c.T.bike) return;
+  exitCar(); player.knockT = 1.3; hurtPlayer(4 + (imp - 190) * .06); sfx('crash', c.x, c.y);
+  msg('You came off the ' + (c.T.bike === 'bicycle' ? 'bike' : 'motorbike') + '!', 1.8);
 }
 function exitCar() {
   const c = player.car; if (!c) return;
@@ -2651,6 +2672,7 @@ function updatePlayer(dt) {
   player.punchT = Math.max(0, player.punchT - dt); player.hurtT = Math.max(0, player.hurtT - dt);
   G.shopCd = Math.max(0, (G.shopCd || 0) - dt);
   const inAir = (player.car && player.car.T.fly) || player.jet || player.para;
+  if (player.knockT > 0) { player.knockT -= dt; player.moving = false; for (const k in pressed) pressed[k] = false; return; }
   if (pressed.wpn && !inAir) {
     player.weapon = nextWeapon(1); G.scopeTouch = false;
     const wp = WEAPONS[player.weapon]; msg(wp.name + (wp.pack ? '  ·  ' + (G.am[wp.id] || 0) : ''), 1);
@@ -2837,6 +2859,7 @@ function updateCars(dt) {
           if (rv < 0) {
             const imp = -rv * .65;
             a.vx -= dx * imp * ma; a.vy -= dy * imp * ma; b.vx += dx * imp * mb; b.vy += dy * imp * mb;
+            if (imp > 190) for (const q of [a, b]) if (q === player.car && q.T.bike) bailBike(imp);
             if (imp > 70) {
               const byP = a === player.car || b === player.car;
               if (isScripted(a)) { toPhysics(a, byP ? 'flee' : 'stop'); }
@@ -3994,7 +4017,126 @@ const carMeshes = new Map();
 const matRed = [new THREE.MeshBasicMaterial({ color: lin('#ff2020') }), new THREE.MeshBasicMaterial({ color: lin('#4a0808') })];
 const matBlue = [new THREE.MeshBasicMaterial({ color: lin('#2a6bff') }), new THREE.MeshBasicMaterial({ color: lin('#0a1a4a') })];
 const lbGeo = new THREE.BoxGeometry(3.2, 1.6, 5.6);
+// ---------------------------------------------------------------- bikes (bicycle, scooter, adventure, sports)
+const BIKE = { // wheel radius, front/rear axle x, seat (x, y), handlebar (x, y), foot rest (x, y), forward lean
+  bicycle: { R: 3.4, fx: 7.2, rx: -7.2, seat: [-2.3, 10.1], bar: [5.0, 10.8], foot: [0, 3.6], lean: .32 },
+  scooter: { R: 2.6, fx: 7.6, rx: -6.8, seat: [-5.0, 9.9], bar: [6.0, 12.4], foot: [-.5, 3.3], lean: .05 },
+  adventure: { R: 3.7, fx: 9.6, rx: -9.0, seat: [-3.2, 13.2], bar: [6.3, 15.4], foot: [-1.6, 5.2], lean: .12 },
+  sport: { R: 3.2, fx: 9.0, rx: -8.6, seat: [-4.0, 11.4], bar: [5.3, 11.9], foot: [-3.6, 5.6], lean: .62 },
+};
+function bikeGeo(kind, col, dead) {
+  const key = 'bike' + kind + col + (dead ? 'd' : ''); if (carGeoCache[key]) return carGeoCache[key];
+  const g = new GB(); g.alt = new GB(); const P = dead ? '#1c1a18' : col, B = BIKE[kind], DK = '#1d1d20';
+  const tube = (sw, c0, a, b, r, z = 0) => { g.uvc = SWU(sw); const dx = b[0] - a[0], dy = b[1] - a[1], L = Math.hypot(dx, dy); tmpQ.setFromEuler(new THREE.Euler(0, 0, Math.atan2(dy, dx) - Math.PI / 2)); tmpM.compose(tmpP.set((a[0] + b[0]) / 2, (a[1] + b[1]) / 2, z), tmpQ, tmpS.set(1, 1, 1)); g.geo(new THREE.CylinderGeometry(r, r, L, 8), tmpM, c0); };
+  const front = [B.fx, B.R], rear = [B.rx, B.R];
+  if (kind === 'bicycle') {
+    const bb = [0, 3.6], st = [-2.0, 9.4], ht = [5.3, 9.6], hb = [5.8, 7.6];
+    tube(S_PAINT, P, bb, st, .42); tube(S_PAINT, P, st, ht, .4); tube(S_PAINT, P, bb, hb, .48); tube(S_PAINT, P, hb, ht, .5);
+    for (const z of [-.9, .9]) { tube(S_PAINT, P, bb, rear, .22, z); tube(S_PAINT, P, [-1.8, 8.7], rear, .22, z); tube(S_CHROME, '#ffffff', hb, front, .24, z); }
+    tube(S_CHROME, '#ffffff', ht, [5.0, 10.8], .25); ocyl(g, S_TRIM, DK, 5.0, 10.8, 0, .28, 5.4, 'z', 8);
+    tube(S_CHROME, '#ffffff', st, [-2.3, 9.8], .25); obox(g, S_TRIM, DK, -2.4, 10.1, 0, 3.2, .7, 1.5);
+    ocyl(g, S_CHROME, '#ffffff', 0, 3.6, 0, 1.3, .3, 'z', 14); for (const z of [-1.5, 1.5]) obox(g, S_TRIM, DK, 0, 3.6, z, 1.6, .3, .9);
+  } else if (kind === 'scooter') {
+    obox(g, S_TRIM, DK, -1, 2.7, 0, 10, 1.0, 5); obox(g, S_PAINT, P, -6.2, 6.0, 0, 7.4, 5.8, 5.4); obox(g, S_PAINT, P, -6.0, 8.6, 0, 6.2, 1.2, 4.6);
+    obox(g, S_TRIM, DK, -5.0, 9.6, 0, 7, 1.2, 4.4); obox(g, S_PAINT, P, 5.2, 7.2, 0, 1.6, 9, 5.2, 0, -.18);
+    tube(S_TRIM, DK, [5.9, 3.4], [6.2, 12.2], .4); obox(g, S_PAINT, P, 6.2, 12.4, 0, 1.8, 1.4, 6.6); for (const z of [-3.4, 3.4]) obox(g, S_TRIM, DK, 6.2, 12.4, z, 1.2, .9, 1.2);
+    obox(g, S_PAINT, P, 7.6, 5.6, 0, 3.6, .5, 2.6); ocyl(g, S_HEAD, '#ffffff', 6.9, 12.3, 0, .8, .5, 'x', 12); obox(g, S_TAIL, '#ffffff', -9.9, 7.4, 0, .4, .8, 2.6);
+    tube(S_TRIM, DK, [-3, 3.2], rear, .5, 1.6);
+  } else if (kind === 'adventure') {
+    obox(g, S_TRIM, DK, 0, 6.2, 0, 6.6, 5.2, 4.4); obox(g, S_CHROME, '#ffffff', 0, 3.4, 0, 7, .6, 4.6);
+    obox(g, S_PAINT, P, 2.6, 12.0, 0, 6.6, 3.6, 5.8); obox(g, S_PAINT, P, 1.6, 9.4, 0, 6, 3, 6.4); obox(g, S_TRIM, DK, -3.4, 12.7, 0, 8, 1.2, 4.4);
+    obox(g, S_TRIM, DK, -8.6, 12.9, 0, 3.6, .4, 4.2); for (const z of [-4.6, 4.6]) obox(g, S_CHROME, '#ffffff', -7.2, 9.4, z, 5.6, 5.2, 2.4);
+    obox(g, S_PAINT, P, 8.3, 9.0, 0, 4.2, 1.1, 2.8, 0, -.3); obox(g, S_GLASS, '#ffffff', 7.0, 16.3, 0, .3, 4.4, 5.0, 0, .3);
+    for (const z of [-1.8, 1.8]) tube(S_CHROME, '#ffffff', [7.8, 14.2], front, .5, z); obox(g, S_TRIM, DK, 6.3, 15.4, 0, .8, .8, 8.4);
+    for (const z of [-3.2, 3.2]) tube(S_CHROME, '#ffffff', [-1, 4.4], [4.5, 9.4], .3, z);
+    for (const z of [-1, 1]) ocyl(g, S_HEAD, '#ffffff', 8.6, 11.6, z, .7, .5, 'x', 10); obox(g, S_TAIL, '#ffffff', -10.4, 12.5, 0, .4, .7, 2.4);
+    for (const z of [-1.6, 1.6]) tube(S_TRIM, DK, [-1, 4.4], rear, .45, z); ocyl(g, S_CHROME, '#ffffff', -6.0, 7.5, 3.4, .9, 5, 'x', 10);
+  } else { // sports bike
+    obox(g, S_TRIM, DK, -.5, 5.0, 0, 6.6, 5, 4.2); obox(g, S_PAINT, P, 6.3, 9.6, 0, 4.6, 5, 5.0, 0, -.35); obox(g, S_PAINT, P, 2.8, 5.2, 0, 6.4, 4.2, 5.4, 0, .1);
+    obox(g, S_PAINT, P, 1.5, 10.6, 0, 6.2, 3, 5.0); obox(g, S_TRIM, DK, -4.0, 11.0, 0, 5, 1, 4.0); obox(g, S_PAINT, P, -7.6, 11.6, 0, 5.4, 2.4, 3.6, 0, .18);
+    obox(g, S_GLASS, '#ffffff', 7.6, 12.6, 0, 2.8, .3, 4.2, 0, -1.0);
+    for (const z of [-1.6, 1.6]) { tube(S_CHROME, '#ffffff', [7.9, 11.8], front, .5, z); tube(S_TRIM, DK, [-.5, 4.2], rear, .5, z); }
+    for (const z of [-2.6, 2.6]) obox(g, S_TRIM, DK, 5.3, 11.9, z, 1.2, .5, 2);
+    ocyl(g, S_CHROME, '#ffffff', -6.6, 6.8, 2.6, .9, 5.2, 'x', 10); obox(g, S_HEAD, '#ffffff', 8.6, 10.2, 0, .4, 1.2, 2.6); obox(g, S_TAIL, '#ffffff', -10.2, 12.0, 0, .4, .7, 2.2);
+    for (const z of [-2.2, 2.2]) tube(S_CHROME, '#ffffff', [5.6, 10.6], [-3.2, 8.4], .45, z);
+  }
+  // wheel: tyre, rim, hub and spokes, built around its own axle (z)
+  const w = new GB(); w.uvc = SWU(S_TIRE); const R = B.R, thick = kind === 'bicycle' ? .38 : kind === 'scooter' ? .9 : .75;
+  w.geo(new THREE.TorusGeometry(R - thick, thick, 8, 26), I4, '#ffffff');
+  w.uvc = SWU(kind === 'bicycle' ? S_CHROME : S_TRIM); w.geo(new THREE.TorusGeometry(R - thick * 2 - .1, .16, 4, 22), I4, kind === 'bicycle' ? '#ffffff' : '#3a3a3e');
+  w.uvc = SWU(S_CHROME); w.geo(new THREE.CylinderGeometry(.45, .45, 1.4, 10).rotateX(Math.PI / 2), I4, '#ffffff');
+  const ns = kind === 'bicycle' ? 16 : 5; for (let k = 0; k < ns; k++) { tmpQ.setFromEuler(new THREE.Euler(0, 0, k / ns * TAU)); tmpM.compose(tmpP.set(0, 0, 0), tmpQ, tmpS.set(1, 1, 1)); w.geo(new THREE.BoxGeometry(kind === 'bicycle' ? .06 : .5, (R - thick * 2) * 2, kind === 'bicycle' ? .06 : .3), tmpM, '#ffffff'); }
+  return (carGeoCache[key] = { b: g.build(), g: g.alt.p.length ? g.alt.build() : null, w: w.build() });
+}
+function makeBikeMesh(c) {
+  const kind = c.T.bike, B = BIKE[kind], G0 = bikeGeo(kind, c.col, c.dead);
+  const root = new THREE.Group(), lean = new THREE.Group(); root.add(lean);
+  const body = new THREE.Mesh(G0.b, matCar); body.castShadow = true; lean.add(body);
+  const glass = G0.g ? new THREE.Mesh(G0.g, matGlass) : null; if (glass) lean.add(glass);
+  const fw = new THREE.Mesh(G0.w, matCar), rw = new THREE.Mesh(G0.w, matCar); fw.position.set(B.fx, B.R, 0); rw.position.set(B.rx, B.R, 0); fw.castShadow = rw.castShadow = true; lean.add(fw); lean.add(rw);
+  const sh = new THREE.Mesh(new THREE.PlaneGeometry(c.len + 6, 10).rotateX(-Math.PI / 2), matShadow); sh.position.y = .35; root.add(sh);
+  root.userData = { bike: true, lean, body, glass, fw, rw, sh, col: c.col, dead: c.dead, spin: 0, pedal: 0, riders: new Map() };
+  return root;
+}
+const ik2 = (sx, sy, tx, ty, L1, L2, bendFwd) => { // 2-bone reach in the bike's side plane; angles measured from straight down, + = forward
+  let dx = tx - sx, dy = ty - sy, d = Math.hypot(dx, dy); const m = (L1 + L2) * .995; if (d > m) { dx *= m / d; dy *= m / d; d = m; }
+  const phi = Math.atan2(dx, -dy), b = Math.acos(clamp((L1 * L1 + d * d - L2 * L2) / (2 * L1 * d), -1, 1)), a1 = bendFwd ? phi + b : phi - b;
+  const ex = sx + Math.sin(a1) * L1, ey = sy - Math.cos(a1) * L1; return [a1, Math.atan2(tx - ex, -(ty - ey))];
+};
+function poseRider(m, kind, seatOff, pedal, passenger) {
+  const u = m.userData, B = BIKE[kind], c0 = passenger ? .12 : B.lean;
+  const hx = B.seat[0] + seatOff, hy = B.seat[1] + (passenger ? .8 : 0) + .3;
+  m.position.set(hx, hy - 9.5, 0); m.rotation.set(0, 0, 0);
+  u.full.visible = true; u.lod.visible = false; u.sh.visible = false;
+  u.body.rotation.set(0, 0, -c0); u.body.position.set(-9.5 * Math.sin(c0), 9.5 - 9.5 * Math.cos(c0), 0);
+  const shX = hx + 5.4 * Math.sin(c0), shY = hy + 5.4 * Math.cos(c0);
+  for (let i = 0; i < 2; i++) { // legs to the foot rests or pedals
+    let fx = B.foot[0], fy = B.foot[1];
+    if (kind === 'bicycle') { const ph = pedal + i * Math.PI; fx += Math.cos(ph) * 1.7; fy += Math.sin(ph) * 1.7; }
+    if (passenger) { fx -= 3.5; fy += .6; }
+    const [t, sh] = ik2(hx, hy, fx, fy + .4, 4.5, 4.9, true);
+    u.thighs[i].rotation.set(i ? -.12 : .12, 0, t + c0); u.shins[i].rotation.set(0, 0, sh - t);
+  }
+  for (let i = 0; i < 2; i++) { // hands on the bars (a passenger holds on behind the rider)
+    const tx = passenger ? hx + 4.2 : B.bar[0], ty = passenger ? hy + 1.5 : B.bar[1];
+    const [a, f] = ik2(shX, shY, tx, ty, 3.1, 4.0, false);
+    u.uppers[i].rotation.set(i ? -.08 : .08, 0, a + c0); u.fores[i].rotation.set(0, 0, f - a);
+  }
+  if (u.gun) u.gun.visible = false;
+}
+function riderHelmet(m, col) {
+  const g = new THREE.Group(), mat = getMat(col, .3, .2);
+  const shell = new THREE.Mesh(new THREE.SphereGeometry(1.32, 16, 12), mat); shell.scale.set(1.1, 1.08, 1.02); shell.position.set(-.05, 17.6, 0); g.add(shell);
+  const visor = new THREE.Mesh(new THREE.SphereGeometry(1.34, 14, 8, -Math.PI * .32, Math.PI * .64, Math.PI * .34, Math.PI * .3), getMat('#111418', .1, .6)); visor.scale.set(1.1, 1.08, 1.02); visor.position.set(-.05, 17.6, 0); g.add(visor);
+  m.userData.full.add(g); return g;
+}
+function updateBikeMesh(c, g, dtR) {
+  const u = g.userData, B = BIKE[c.T.bike];
+  if (u.col !== c.col || u.dead !== c.dead) { const G0 = bikeGeo(c.T.bike, c.col, c.dead); u.body.geometry = G0.b; if (u.glass && G0.g) u.glass.geometry = G0.g; u.fw.geometry = u.rw.geometry = G0.w; u.col = c.col; u.dead = c.dead; }
+  g.position.set(c.x, groundH(c.x, c.y), c.y);
+  let tp = 0; if (!inCityFoot(c.x, c.y)) { const ca = Math.cos(c.a), sa = Math.sin(c.a); tp = Math.atan2(groundH(c.x + ca * B.fx, c.y + sa * B.fx) - groundH(c.x + ca * B.rx, c.y + sa * B.rx), B.fx - B.rx); }
+  u.tp = lerp(u.tp || 0, tp, .3);
+  const fwd = c.vx * Math.cos(c.a) + c.vy * Math.sin(c.a), sp = Math.abs(fwd), ridden = c === player.car || (c.driver && !c.dead);
+  const leanT = ridden ? -(c.steerS || 0) * clamp(sp / 260, 0, 1) * .5 : c.dead ? 1.35 : .14; // lean into turns; parked bikes rest on the stand
+  u.leanV = lerp(u.leanV || 0, leanT, Math.min(1, dtR * 6));
+  g.rotation.set(0, -c.a, u.tp, 'YXZ'); u.lean.rotation.set(u.leanV, 0, 0);
+  u.spin -= fwd * dtR / B.R; u.fw.rotation.set(0, (c.steerV || 0) * .35, u.spin, 'YXZ'); u.rw.rotation.set(0, 0, u.spin);
+  u.pedal += fwd * dtR / 6;
+  const d = dist(c.x, c.y, cam.x, cam.y); g.visible = d < 1550; u.sh.visible = !QUAL.high;
+  // riders: you, an NPC rider in traffic, or a crew passenger
+  const want = [];
+  if (c === player.car) want.push(player); else if (c.driver && !c.dead && c.ai !== 'none') want.push(c.riderPed || (c.riderPed = {}));
+  if (c.crew && c.crew[0]) want.push(c.crew[0]);
+  for (const [p, m] of u.riders) if (!want.includes(p) || d > 520) { u.lean.remove(m); u.riders.delete(p); }
+  if (d > 520) return;
+  want.forEach((p, i) => {
+    let m = u.riders.get(p);
+    if (!m) { m = p === player ? makePedMesh({}, true) : makePedMesh(p, false); m.traverse(o => { o.castShadow = false; }); if (c.T.bike !== 'bicycle') riderHelmet(m, p === player ? '#15171c' : pickR(['#111111', '#f4f4f4', '#c8101e', '#1d3f8f', c.col])); if (!QUAL.high) applyQual(m); u.lean.add(m); u.riders.set(p, m); }
+    poseRider(m, c.T.bike, i ? -3.6 : 0, u.pedal, i > 0);
+  });
+}
 function makeCarMesh(c) {
+  if (c.T.bike) return makeBikeMesh(c);
   if (c.T.fly) return makeAircraftMesh(c);
   if (c.T.boat) return makeBoatMesh(c);
   const D = CAR_DESIGN[c.type];
@@ -4025,6 +4167,7 @@ function updateCarMesh(c, g, dtR) {
   const u = g.userData;
   if (u.air) return updateAircraftMesh(c, g, dtR);
   if (u.boat) return updateBoatMesh(c, g);
+  if (u.bike) return updateBikeMesh(c, g, dtR);
   if (u.col !== c.col || u.dead !== c.dead) { const CG = carGeo(c.type, c.col, c.dead), CL = carGeo(c.type, c.col, c.dead, true); u.body.geometry = CG.b; u.glass.geometry = CG.g; u.bodyLo.geometry = CL.b; u.glassLo.geometry = CL.g; u.col = c.col; u.dead = c.dead; }
   g.position.set(c.x, groundH(c.x, c.y), c.y);
   if (!inCityFoot(c.x, c.y)) {
@@ -4450,7 +4593,7 @@ function closeCreator() {
 }
 function refreshPlayerModel() {
   if (playerMesh) { scene.remove(playerMesh); playerMesh = null; }
-  for (const g of carMeshes.values()) if (g.userData.seats) for (const [p, m] of g.userData.seats) if (p === player) { m.parent.remove(m); g.userData.seats.delete(p); }
+  for (const g of carMeshes.values()) { if (g.userData.seats) for (const [p, m] of g.userData.seats) if (p === player) { m.parent.remove(m); g.userData.seats.delete(p); } if (g.userData.riders) for (const [p, m] of g.userData.riders) if (p === player) { m.parent.remove(m); g.userData.riders.delete(p); } }
   try { localStorage.setItem('neoncoast.look', JSON.stringify(PLOOK)); } catch (e) { }
 }
 function setLook(k, v) {
@@ -4574,8 +4717,8 @@ function placeCamera(menu) {
     const fx = c ? c.x : player.x, fy = c ? c.y : player.y, fly = c && c.T.fly;
     const fh = (c ? (fly ? c.z : groundH(fx, fy)) : (player.z || groundH(fx, fy))) + (c ? (fly === 'plane' ? 18 : 16) : 14.5);
     const sp = c ? Math.hypot(c.vx, c.vy) : 0;
-    let D = fly === 'plane' ? 150 + sp * .05 : fly === 'heli' ? 115 + sp * .04 : c ? 92 + sp * .045 : player.jet || player.para ? 62 : 44;
-    let Hh = fly === 'plane' ? 40 : fly === 'heli' ? 40 : c ? 34 : player.jet || player.para ? 24 : 18;
+    let D = fly === 'plane' ? 150 + sp * .05 : fly === 'heli' ? 115 + sp * .04 : c && c.T.bike ? 62 + sp * .04 : c ? 92 + sp * .045 : player.jet || player.para ? 62 : 44;
+    let Hh = fly === 'plane' ? 40 : fly === 'heli' ? 40 : c && c.T.bike ? 24 : c ? 34 : player.jet || player.para ? 24 : 18;
     const aiming = !c && mouse.aim && inputMode === 'kbm';
     if (aiming) { D = 24; Hh = 5; }
     Hh += camPitch * D * .9;
@@ -4634,7 +4777,7 @@ function render3D(menu) {
   playerMesh.visible = !menu && !player.car && !(G.inCasino && G.state !== 'creator') && !isScoped();
   if (playerMesh.visible) {
     const up = playerMesh.userData, inAir = player.z - floorAt(player.x, player.y, player.z) > 3;
-    poseFigure(playerMesh, player.x, player.y, player.a, player.anim, player.moving && !inAir, G.state === 'dead' && G.deathKind === 'WASTED', player.punchT > 0 ? 'punch' : (player.weapon > 0 && player.aimT > 0) ? true : false, runHeld(), true);
+    poseFigure(playerMesh, player.x, player.y, player.a, player.anim, player.moving && !inAir, (G.state === 'dead' && G.deathKind === 'WASTED') || player.knockT > 0, player.punchT > 0 ? 'punch' : (player.weapon > 0 && player.aimT > 0) ? true : false, runHeld(), true);
     playerMesh.position.y = (player.z || groundH(player.x, player.y)) - (player.swim ? 13 : 0);
     if (player.swim) { const sw = Math.sin(G.time * 5); up.uppers.forEach((a, i) => a.rotation.set((i ? -1 : 1) * (.6 + sw * .5), 0, 1.4)); up.fores.forEach(f => f.rotation.set(0, 0, .3)); }
     up.jet.visible = !!player.jet; up.para.visible = !!player.para;
@@ -4960,7 +5103,15 @@ function newWorldState(fresh) {
   makeCar('plane', AIRF.x - AIRF.len / 2 + 160, AIRF.y, 0, { col: '#c8101e', persist: true });
   makeCar('heli', AIRF.x + 300, AIRF.y - 180, Math.PI / 2, { col: '#1d1d22', persist: true });
   { const hb = blocks.find(b => b.type === 'hospital').bld[0]; const hx = hb.x + hb.w / 2, hy = hb.y + hb.h / 2; makeCar('heli', hx, hy, 0, { col: '#f4f4f4', persist: true, z: 2.5 + hb.h3 + 3 }); }
-  makeCar('gt', TOWN.x + 150, TOWN.y + 30, Math.PI / 2, { col: '#c8101e', persist: true });
+  const clearSpot = (x, y, r = 30) => { // nearest spot with nothing built on it
+    for (let d = 0; d <= 240; d += 12) for (let k = 0; k < (d ? 12 : 1); k++) { const q = { x: x + Math.cos(k / 12 * TAU) * d, y: y + Math.sin(k / 12 * TAU) * d }; if (!propAt(q.x, q.y) && !solidAt(q.x, q.y) && roofAt(q.x, q.y) === 0 && !deepWater(q.x, q.y) && !propAt(q.x + r, q.y) && !propAt(q.x - r, q.y) && !propAt(q.x, q.y + r) && !propAt(q.x, q.y - r)) return q; }
+    return { x, y };
+  };
+  const place = (type, x, y, a, opts) => { const q = clearSpot(x, y); return makeCar(type, q.x, q.y, a, Object.assign({ persist: true }, opts)); };
+  place('gt', TOWN.x + 150, TOWN.y + 30, Math.PI / 2, { col: '#c8101e' });
+  { const h = places.home; place('bicycle', h.x + 70, h.y + 40, 0); place('scooter', h.x + 70, h.y + 62, 0); }
+  place('adventure', TOWN.x + 150, TOWN.y + 110, Math.PI / 2, { col: '#f28c28' });
+  place('sportbike', places.casino.x + 60, places.casino.y + 70, 0, { col: '#c8101e' });
   makeCar('boat', WORLD + 430, 7.5 * CELL - 34, 0, { col: '#f4f4f4', persist: true });
   makeCar('boat', WORLD + 560, 7.5 * CELL + 34, 0, { col: '#c8101e', persist: true });
   makeCar('boat', ISL.x - ISL.r - 380, ISL.y + 34, Math.PI, { col: '#1d3f8f', persist: true });
@@ -5034,8 +5185,8 @@ window.__NC = { G, player, places, startGame, press: k => { pressed[k] = true; }
 
 // version label + updates: the page always asks GitHub for the newest files when online (see sw.js);
 // if a new version arrives while the game is open, the menu offers a one-tap update
-const GAME_VERSION = 'v10.4';
-for (const el of document.querySelectorAll('.ver')) el.textContent = GAME_VERSION + ' · easier driving, zoomable map, new cities, police helicopters';
+const GAME_VERSION = 'v10.5';
+for (const el of document.querySelectorAll('.ver')) el.textContent = GAME_VERSION + ' · bikes, easier driving, zoomable map, new cities, police helicopters';
 $('btnUpdate').onclick = () => { save(); location.reload(); };
 if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
   let hadController = !!navigator.serviceWorker.controller;
