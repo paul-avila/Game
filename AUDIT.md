@@ -10,7 +10,7 @@ Scope: everything in this repository (`index.html` game, `sw.js` offline cache, 
 | Casino rules | `tests/casino-rules.test.js` (106 assertions) | **All pass** |
 | Baccarat odds | 2,000,000 simulated 8-deck hands vs published odds | Banker 45.83% / Player 44.66% / Tie 9.52% (published 45.86 / 44.62 / 9.52); house edge Banker 1.12%, Player 1.17% (published 1.06 / 1.24, within simulation noise) |
 | Slots payback | Exact calculation from reel weights | 91.75% |
-| Full playthrough | `tests/e2e.js` (headless Chromium, laptop layout) | **52/52 pass** |
+| Full playthrough | `tests/e2e.js` (headless Chromium, laptop layout) | **75/75 pass** (after v10) |
 | Phone layout | Playwright Pixel 7 emulation | touch buttons, joystick, TALK/PLAY context button, dialogue taps |
 | Content and safety | Source search | see "Safety and content" below |
 
@@ -56,6 +56,16 @@ Fixes for the five problems reported after the first delivery, plus the characte
 **Characters.** People are rebuilt with a sculpted head: brow, eye sockets, almond eyes with lids, nose, lips, jaw and chin, with smooth skin shading for lips, brows, stubble and blush. Hair grows from a natural hairline, and long hair and ponytails hang behind the shoulders. Arms and legs are muscle-shaped with hands, thumbs and sneakers, and clothing has proper prints. Far-away people use a low-detail version: total triangles on screen went *down* slightly versus the previous build (240k vs 261k at the same view). Rendering cost was measured the same in software rendering (0.75 fps for both builds in the GPU-less test container).
 
 A **character creator** (menu or pause → Character) sets name, body, build, skin, hair, facial hair, clothes, prints, colors and extras, with a face close-up. The name is used in story dialogue. The look is stored in a fourth `localStorage` key (`neoncoast.look`, wrapped in try/catch like the others). The characters are original. They are not copies of any game's protagonists.
+
+## v10: cities, police helicopters, weapons, car speeds
+
+| Change | Details | Check |
+|---|---|---|
+| Car speeds | Top speed and acceleration lowered (about 20–35%) and spread by model: van 105, sedan/taxi 135, police 170, coupe 180, Vento GT 200, Vento S 220 km/h. Top speed is shown on entering. Nitrous boost 1.7× → 1.45×. | e2e: speeds strictly increase van → Vento S, max ≤ 230 km/h |
+| Connected cities | Sunset Bluffs, Copper Ridge and Northgate sit on the highway loop, each a flattened 4×4-block grid with towers, offices, shops, homes, parking, pedestrians and city-limit signs. The highway is held level through each city, so it doesn't run on an embankment. GPS routing joins roads wherever they cross. | e2e: teleport into each city, GPS route from downtown into a city |
+| Police helicopters | 1 at 3–4 stars, 2 at 5. They circle overhead, a door gunner fires bursts, and at night a searchlight follows you. They keep the wanted level from dropping while they can see you. A direct rocket hit or sustained fire brings one down (+heat). | e2e: helicopter joins the chase in the air and can be shot down |
+| Weapons | Shotgun (7 pellets), assault rifle, sniper rifle (zoom scope with right click or SCOPE), rocket launcher (explosive; locks on to aircraft). Gun store sells them all; 1–7 picks a weapon on a keyboard. Old saves migrate (pistol/SMG ammo kept). | e2e: key 7 selects the launcher, scope engages, rocket wrecks a car |
+| Bug fixes found while testing | Explosions damaged cars without setting them alight (no chain reactions). Explosion debris spawned at street level on hills. The map-pin sound used a missing effect name. | Checked in the browser: a rocket-hit car now catches fire |
 
 ## Safety and content
 

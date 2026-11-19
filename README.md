@@ -22,7 +22,8 @@ The game picks the right layout automatically: touch buttons on phones and table
 | Handbrake | Space or Shift | BRAKE |
 | Enter / exit vehicle | F or E | CAR |
 | Take off the rocket pack | F or E (away from vehicles; mid-air opens a parachute) | PACK OFF |
-| Switch weapon | Q or mouse wheel | ⇄ |
+| Switch weapon | Q, mouse wheel, or 1–7 to pick one | ⇄ |
+| Sniper scope | Hold right click (sniper rifle) | SCOPE |
 | Fly up / down | Space / C | UP / DOWN |
 | Recruit crew · talk to people | G | RECRUIT / TALK |
 | Play a casino table | F | PLAY |
@@ -40,7 +41,10 @@ The game picks the right layout automatically: touch buttons on phones and table
 - **Character creator** (main menu → Character, or Pause → Character): name, man/woman, build, skin tone, hair style and color, facial hair, top, print, colors, bottoms, shoes and accessories, with a face close-up. Your look is saved and used in the story's dialogue.
 - **Map pins with GPS**: open the map, tap anywhere to drop a pin; a purple route follows the roads (dashed line when there's no road, such as to the island), a light beam marks the spot, and the HUD shows distance and direction. The pin clears when you arrive.
 - Traffic AI, pedestrians, parked cars, carjacking, crashes, fires and explosions
-- 5-star wanted system: patrols, pursuits, foot cops, busted / wasted, Respray garage
+- 5-star wanted system: patrols, pursuits, foot cops, busted / wasted, Respray garage. At 3 stars a **police helicopter** joins the chase (two at 5 stars): it circles overhead, a cop shoots from the door, and at night it lights you up with a searchlight. Shoot it down (rifle, sniper or rocket launcher) or outrun it.
+- **Weapons**: fists, pistol, SMG, shotgun, assault rifle, sniper rifle (zoom scope), rocket launcher (explodes cars, people and helicopters). Buy them at the gun store (orange marker).
+- **Car speeds by model** (top speed shows when you get in): van 105 km/h, sedan/taxi 135, police 170, coupe 180, Vento GT 200, Vento S 220.
+- **Connected cities**: the highway loop links Neon Coast to Pine Hollow and three new cities: **Sunset Bluffs** (southwest, near the coast), **Copper Ridge** (west) and **Northgate** (north). Each has a street grid, downtown towers, shops, homes, parked cars and pedestrians, and a sign and on-screen name as you arrive.
 - Huge world: 14×14-block city, desert, the town of Pine Hollow, an airfield with runway, hangars, a parked plane and helicopters, and mountain countryside: ridged peaks with rock and snow, pine forests, coastline, a winding mountain highway with guard rails, a radio tower on the summit, off-road driving with slope physics
 - **Story campaign** (9 missions with dialogue): Mama Lu, Benny, Detective Hale and casino owner Isla Moreno help Dex take the coast back from Victor Kane's Vipers. Walk into the gold ★ marker to start the next mission; progress is saved.
 - **Neon Palace casino**: walk inside a 3D casino and play **Baccarat** (official Punto Banco third-card rules, Banker pays 0.95:1, Tie 8:1), **Blackjack** (3:2, dealer stands on 17, double down) and **Slots** (≈92% payback). There's a bar too. In-game money only.
@@ -49,7 +53,7 @@ The game picks the right layout automatically: touch buttons on phones and table
 - **Weather**: random rain showers (wet, reflective streets).
 - Gangs: your green Palms crew and the rival purple Vipers each hold turf. Recruit up to four Palms; they follow you, fight, ride in your car or helicopter and shoot out of the windows. Vipers attack in their turf.
 - Flying: helicopter, stunt plane, rocket backpack, automatic parachute when you bail out mid-air; land on rooftops
-- Driving: speed-sensitive steering and extra grip for stable high-speed handling
+- Driving: speed-sensitive steering and extra grip for stable high-speed handling; calmer top speeds and acceleration
 - Jobs from green `$` markers (now including a mountain race): courier, bank job, hit, street race, rideshare
 - Gun store (SMG, armor), clinic, safehouse save, day/night cycle, synthesized audio, autosave
 
@@ -62,7 +66,7 @@ Type a code on the keyboard at any time, or open **Pause → Cheats** to type or
 |---|---|
 | FIXME | Full health, armor and car repair |
 | PAYDAY | +$250,000 |
-| LOCKNLOAD | All weapons, 999 ammo |
+| LOCKNLOAD | All weapons (incl. sniper and rocket launcher), full ammo |
 | BOTTOMLESS | Infinite ammo (toggle) |
 | IRONSKIN | Invincible (toggle) |
 | CLEANRECORD | Clear wanted level |
@@ -70,7 +74,7 @@ Type a code on the keyboard at any time, or open **Pause → Cheats** to type or
 | GHOSTMODE | Police ignore you (toggle) |
 | ROSSO / GRANDTOUR | Spawn a Vento S / Vento GT supercar |
 | SIRENS / YELLOWCAB | Spawn a police cruiser / taxi |
-| NITROUS | Super-fast cars (toggle) |
+| NITROUS | Faster cars (toggle) |
 | BIGBANG | Blow up all nearby cars |
 | SLOWMO | Slow motion (toggle) |
 | EMPTYSTREETS / RUSHHOUR | No traffic / heavy traffic (toggle) |
@@ -81,6 +85,7 @@ Type a code on the keyboard at any time, or open **Pause → Cheats** to type or
 | JETSTREAM | Fly a stunt plane (starts in the air) |
 | CREWUP | Three Palms gang members join you |
 | AIRFIELD / PINEHOLLOW | Teleport to the airfield / Pine Hollow |
+| BLUFFS / COPPER / NORTHGATE | Teleport to Sunset Bluffs / Copper Ridge / Northgate |
 | GOLDRUSH | +$1,000,000 |
 | SPEEDBOAT | Spawn a speedboat on nearby water (or at the pier) |
 | PARADISE / HIGHROLLER | Teleport to the island / the Neon Palace |

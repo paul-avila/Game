@@ -189,7 +189,31 @@ const check = (name, cond, info = '') => { results.push([cond ? 'PASS' : 'FAIL',
   await p.fill('#ccName', 'Nova'); await p.click('#ccDone'); await wait(300);
   check('look is saved', await E(() => { const L = JSON.parse(localStorage.getItem('neoncoast.look')); return L.fem && L.hairStyle === 'ponytail' && L.name === 'Nova'; }));
   await p.click('#btnResume'); await wait(300);
-
+  // ---- v10: car speeds by model, connected cities, weapons, police helicopter
+  const tops = await E(() => ['van', 'sedan', 'police', 'sport', 'gt', 'super'].map(k => Math.round(__NC.CARTYPES[k].max * .35)));
+  check('top speed depends on the car (van → supercar), max 230 km/h', tops.every((v, i) => !i || v > tops[i - 1]) && tops[5] <= 230, tops.join(' < '));
+  for (const code of ['BLUFFS', 'COPPER', 'NORTHGATE']) {
+    await p.evaluate(c => __NC.cheat(c), code); await wait(400);
+    check('teleport into ' + code, await p.evaluate(c => { const C = __NC.SATS.find(q => q.code === c), P = __NC.player; return Math.abs(P.x - C.x) < C.half && Math.abs(P.y - C.y) < C.half && Math.abs(P.z - C.h) < 8; }, code));
+  }
+  check('city streets join the highway route network', await E(() => { const C = __NC.SATS[0]; __NC.cheat('HOMEBASE'); __NC.setPin(C.x + 10, C.y + 10); return !!__NC.route && __NC.route.road; }));
+  await E(() => __NC.cheat('HOMEBASE')); await wait(300);
+  await E(() => __NC.cheat('LOCKNLOAD'));
+  await p.keyboard.press('7'); await wait(300);
+  check('number key 7 picks the rocket launcher', await E(() => __NC.WEAPONS[__NC.player.weapon].id === 'rpg'));
+  await p.keyboard.press('6'); await wait(300); await E(() => { __NC.mouse.aim = true; }); await wait(400);
+  check('sniper rifle zooms into a scope', await E(() => __NC.isScoped()));
+  await E(() => { __NC.mouse.aim = false; });
+  await E(() => { const P = __NC.player; P.x = 3 * 480; P.y = 2 * 480 + 60; P.z = 0; P.a = Math.PI / 2; for (const q of __NC.peds) if (Math.hypot(q.x - P.x, q.y - P.y) < 800) q.x += 6000; for (const c of __NC.cars) if (c !== P.car && Math.hypot(c.x - P.x, c.y - P.y) < 400) c.x += 6000; P.weapon = 6; __NC.setYaw(P.a); const c = __NC.makeCar('sedan', P.x, P.y + 200, P.a, {}); c.target = true; window.__tc = c; });
+  await wait(400); await E(() => { __NC.G.fireCd = 0; __NC.shoot(); });
+  check('rocket launcher wrecks a car', await until(() => window.__tc.hp <= 0 || window.__tc.dead, 8000), JSON.stringify(await E(() => ({ hp: Math.round(window.__tc.hp) }))));
+  await E(() => { __NC.cheat('MOSTWANTED'); const P = __NC.player, h = __NC.spawnCopHeli(P.x, P.y); h.x = P.x + 450; h.y = P.y; });
+  check('police helicopter flies the chase', await until(() => { const h = __NC.cars.find(c => c.ai === 'copheli'), P = __NC.player; return h && h.z - __NC.groundH(h.x, h.y) > 80 && Math.hypot(h.x - P.x, h.y - P.y) < 400; }, 45000));
+  await E(() => { const h = __NC.cars.find(c => c.ai === 'copheli'), P = __NC.player; h.hp = 1; h.x = P.x + 200; h.y = P.y; window.__h = h; P.weapon = 4; });
+  for (let k = 0; k < 12 && !(await E(() => window.__h.hp <= 0)); k++) { await E(() => { const h = window.__h, P = __NC.player; P.a = Math.atan2(h.y - P.y, h.x - P.x); __NC.setYaw(P.a); __NC.G.fireCd = 0; __NC.shoot(); }); await wait(300); }
+  check('the helicopter can be shot down', await E(() => window.__h.hp <= 0 || window.__h.ai !== 'copheli'));
+  await E(() => { __NC.cheat('CLEANRECORD'); });
+  // ---- Save / reload persistence
   await E(() => { __NC.G.saveT = 99; }); await wait(1200);
   const before = await E(() => ({ story: __NC.G.storyIdx, cash: Math.floor(__NC.G.cash) }));
   await p.reload(); await p.waitForSelector('#btnPlay');
